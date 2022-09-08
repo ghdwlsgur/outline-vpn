@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash 
+
 set -e -o pipefail
 trap '[ "$?" -eq 0 ] || echo "Error Line:<$LINENO> Error Function:<${FUNCNAME}>"' EXIT
 cd `dirname $0` && cd ..
