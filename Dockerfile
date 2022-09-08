@@ -8,4 +8,4 @@ FROM scratch
 ENV PATH /go/bin
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /build/ /go/bin/
-CMD [ "/go/bin/gossm" ]
+CMD [ "/go/bin/govpn" ]
