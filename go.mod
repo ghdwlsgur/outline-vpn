@@ -10,6 +10,8 @@ require (
 	github.com/stretchr/testify v1.8.0
 )
 
+require github.com/aws/aws-sdk-go-v2/service/ssm v1.27.13
+
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.5
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.15 // indirect

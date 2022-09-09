@@ -1,5 +1,10 @@
 #!/usr/bin/env bash 
 
+# Copyright © 2020 gjbae1212
+# Released under the MIT license.
+# (https://github.com/gjbae1212/gossm)
+
+
 set -e -o pipefail
 trap '[ "$?" -eq 0 ] || echo "Error Line:<$LINENO> Error Function:<${FUNCNAME}>"' EXIT
 cd `dirname $0` && cd ..

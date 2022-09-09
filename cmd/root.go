@@ -11,12 +11,9 @@ import (
 	"fmt"
 	"govpn/internal"
 	"os"
-	"sort"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,23 +33,6 @@ var (
 	_credential              *Credential
 	_credentialWithMFA       = fmt.Sprintf("%s_mfa", config.DefaultSharedConfigFilename())
 	_credentialWithTemporary = fmt.Sprintf("%s_temporary", config.DefaultSharedCredentialsFilename())
-
-	defaultAwsRegions = []string{
-		"af-south-1",
-		"ap-east-1", "ap-northeast-1", "ap-northeast-2", "ap-northeast-3", "ap-south-1", "ap-southeast-2", "ap-southeast-3",
-		"ca-central-1",
-		"cn-north-1", "cn-northwest-1",
-		"eu-central-1", "eu-north-1", "eu-south-1", "eu-west-1", "eu-west-2", "eu-west-3",
-		"me-south-1",
-		"sa-east-1",
-		"us-east-1", "us-east-2", "us-gov-east-1", "us-gov-west-2", "us-west-1", "us-west-2",
-	}
-)
-
-type (
-	Region struct {
-		Name string
-	}
 )
 
 type Credential struct {
@@ -70,39 +50,6 @@ func Execute(version string) {
 func panicRed(err error) {
 	fmt.Println(color.RedString("[err] %s", err.Error()))
 	os.Exit(1)
-}
-
-func AskRegion(ctx context.Context, cfg aws.Config) (*Region, error) {
-	var regions []string
-	client := ec2.NewFromConfig(cfg)
-
-	output, err := client.DescribeRegions(ctx, &ec2.DescribeRegionsInput{
-		AllRegions: aws.Bool(true),
-	})
-	if err != nil {
-		regions = make([]string, len(defaultAwsRegions))
-		copy(regions, defaultAwsRegions)
-	} else {
-		regions = make([]string, len(output.Regions))
-		for _, region := range output.Regions {
-			regions = append(regions, aws.ToString(region.RegionName))
-		}
-	}
-	sort.Strings(regions)
-
-	var region string
-	prompt := &survey.Select{
-		Message: "Choose a region in AWS:",
-		Options: regions,
-	}
-
-	if err := survey.AskOne(prompt, &region, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.SelectFocus.Format = "green+hb"
-	}), survey.WithPageSize(20)); err != nil {
-		return nil, err
-	}
-
-	return &Region{Name: region}, nil
 }
 
 func initConfig() {
@@ -240,13 +187,20 @@ func initConfig() {
 		_credential.awsConfig.Region = awsRegion
 	}
 	if _credential.awsConfig.Region == "" {
-		askRegion, err := AskRegion(context.Background(), *_credential.awsConfig)
+		askRegion, err := internal.AskRegion(context.Background(), *_credential.awsConfig)
 		if err != nil {
 			panicRed(internal.WrapError(err))
 		}
 		_credential.awsConfig.Region = askRegion.Name
 	}
 	color.Green("region (%s)", _credential.awsConfig.Region)
+
+	askAmi, err := internal.AskAmi(context.Background(), *_credential.awsConfig)
+	if err != nil {
+		panicRed(internal.WrapError(err))
+	}
+	color.Green("ami (%s)", askAmi.Name)
+
 }
 
 func init() {
