@@ -13,6 +13,22 @@ require (
 require github.com/aws/aws-sdk-go-v2/service/ssm v1.27.13
 
 require (
+	github.com/Microsoft/go-winio v0.5.2 // indirect
+	github.com/emirpasic/gods v1.18.1 // indirect
+	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
+	github.com/kevinburke/ssh_config v1.2.0 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/sergi/go-diff v1.2.0 // indirect
+	github.com/src-d/gcfg v1.4.0 // indirect
+	github.com/xanzy/ssh-agent v0.3.2 // indirect
+	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
+	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
+	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
+	gopkg.in/src-d/go-git.v4 v4.13.1 // indirect
+	gopkg.in/warnings.v0 v0.1.2 // indirect
+)
+
+require (
 	github.com/AlecAivazis/survey/v2 v2.3.5
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.15 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.21 // indirect
@@ -45,7 +61,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.13.0
 	github.com/subosito/gotenv v1.4.1 // indirect
-	golang.org/x/sys v0.0.0-20220907062415-87db552b00fd // indirect
+	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2 // indirect
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
