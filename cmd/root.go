@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"govpn/internal"
@@ -18,6 +20,7 @@ import (
 const (
 	_defaultProfile       = "default"
 	_defaultTerraformPath = "./terraform-vpn-server"
+	_defaultTerraformVars = "./terraform-vpn-server/terraform.tfvars.json"
 	_defaultGitUrl        = "https://github.com/ghdwlsgur/terraform"
 )
 
@@ -31,7 +34,15 @@ var (
 	_credential              *Credential
 	_credentialWithMFA       = fmt.Sprintf("%s_mfa", config.DefaultSharedConfigFilename())
 	_credentialWithTemporary = fmt.Sprintf("%s_temporary", config.DefaultSharedCredentialsFilename())
+
+	_terraformVarsJson *TerraformVarsJson
 )
+
+type TerraformVarsJson struct {
+	Aws_Region    string
+	Ec2_Ami       string
+	Instance_Type string
+}
 
 type Credential struct {
 	awsProfile string
@@ -75,6 +86,32 @@ func initConfig() {
 		if err != nil {
 			fmt.Println(color.GreenString("terraform-vpn-server (%s)", err.Error()))
 		}
+	}
+
+	if _, err := os.Stat(_defaultTerraformVars); errors.Is(err, os.ErrNotExist) {
+		// terraform-vpn-server/terraform.tfvars.json does not exist
+		buffer, err := os.ReadFile(_defaultTerraformVars)
+		if err != nil {
+			panicRed(err)
+		}
+		_terraformVarsJson = &TerraformVarsJson{}
+		json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJson)
+
+		fmt.Println(_terraformVarsJson.Aws_Region)
+		fmt.Println(_terraformVarsJson.Ec2_Ami)
+		fmt.Println(_terraformVarsJson.Instance_Type)
+	} else {
+		// terraform-vpn-server/terraform.tfvars.json exists
+		buffer, err := os.ReadFile(_defaultTerraformVars)
+		if err != nil {
+			panicRed(err)
+		}
+		_terraformVarsJson = &TerraformVarsJson{}
+		json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJson)
+
+		// fmt.Println(_terraformVarsJson.Aws_Region)
+		// fmt.Println(_terraformVarsJson.Ec2_Ami)
+		// fmt.Println(_terraformVarsJson.Instance_Type)
 	}
 
 	/*
