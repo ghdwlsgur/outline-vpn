@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -35,22 +36,23 @@ type (
 	}
 )
 
-// func FindAmis(ctx context.Context, cfg aws.Config) (map[string]*Ami, error) {
-// 	var (
-// 		client     = ec2.NewFromConfig(cfg)
-// 		table      = make(map[string]*Ami)
-// 		outputFunc = func(table map[string]*Ami, output *ec2.DescribeImagesOutput) {
-// 			for _, img := range output.Images {
-// 				img.ImageLocation
-// 			}
-// 		}
-// 	)
-// }
-
 func AskAmi(ctx context.Context, cfg aws.Config) (*Ami, error) {
 	var amis []string
+	var (
+		client     = ec2.NewFromConfig(cfg)
+		table      = make(map[string]*Ami)
+		outputFunc = func(table map[string]*Ami, output *ec2.DescribeImagesOutput) {
+			for _, ami := range output.Images {
 
-	client := ec2.NewFromConfig(cfg)
+				if strings.Contains(*ami.ImageLocation, "amzn-ami-hvm") {
+					table[fmt.Sprintf("%s\t(%s)", *ami.ImageId, *ami.ImageLocation)] = &Ami{
+						Name:          aws.ToString(ami.ImageId),
+						ImageLocation: aws.ToString(ami.ImageLocation),
+					}
+				}
+			}
+		}
+	)
 
 	output, err := client.DescribeImages(ctx,
 		&ec2.DescribeImagesInput{
@@ -59,37 +61,38 @@ func AskAmi(ctx context.Context, cfg aws.Config) (*Ami, error) {
 				{Name: aws.String("state"), Values: []string{"available"}},
 				{Name: aws.String("architecture"), Values: []string{"x86_64"}},
 				{Name: aws.String("root-device-type"), Values: []string{"ebs"}},
+				{Name: aws.String("is-public"), Values: []string{"true"}},
 			},
 		},
 	)
+
 	if err != nil {
 		amis = make([]string, len(defaultAmis))
 		copy(amis, defaultAmis)
 	} else {
-		// amis = make([]string, len(output.Images))
-		// for _, ami := range output.Images {
-		// 	amis = append(amis, aws.ToString(ami.ImageLocation))
-		// }
-		amis = make([]string, len(output.Images))
-		for _, ami := range output.Images {
-			if strings.Contains(aws.ToString(ami.ImageLocation), "amzn-ami-hvm") {
-				amis = append(amis, aws.ToString(ami.ImageId))
-			}
-		}
+		amis = make([]string, 0, len(table))
+		outputFunc(table, output)
+	}
+
+	for idwithLocation := range table {
+		amis = append(amis, idwithLocation)
 	}
 	sort.Sort(sort.Reverse(sort.StringSlice(amis)))
-	// sort.Strings(amis)
 
-	var ami string
+	if len(amis) == 0 {
+		return nil, fmt.Errorf("not found Amazon Machine Image")
+	}
+
 	prompt := &survey.Select{
-		Message: "Choose a EC's Amazon Machine Image",
+		Message: "Choose a Amazon Machine Image in AWS:",
 		Options: amis,
 	}
-	if err := survey.AskOne(prompt, &ami, survey.WithIcons(func(icons *survey.IconSet) {
+
+	selectKey := ""
+	if err := survey.AskOne(prompt, &selectKey, survey.WithIcons(func(icons *survey.IconSet) {
 		icons.SelectFocus.Format = "green+hb"
 	}), survey.WithPageSize(20)); err != nil {
 		return nil, err
 	}
-
-	return &Ami{Name: ami}, nil
+	return table[selectKey], nil
 }
