@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"sort"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -29,9 +30,22 @@ var (
 
 type (
 	Ami struct {
-		Name string
+		Name          string
+		ImageLocation string
 	}
 )
+
+// func FindAmis(ctx context.Context, cfg aws.Config) (map[string]*Ami, error) {
+// 	var (
+// 		client     = ec2.NewFromConfig(cfg)
+// 		table      = make(map[string]*Ami)
+// 		outputFunc = func(table map[string]*Ami, output *ec2.DescribeImagesOutput) {
+// 			for _, img := range output.Images {
+// 				img.ImageLocation
+// 			}
+// 		}
+// 	)
+// }
 
 func AskAmi(ctx context.Context, cfg aws.Config) (*Ami, error) {
 	var amis []string
@@ -42,34 +56,29 @@ func AskAmi(ctx context.Context, cfg aws.Config) (*Ami, error) {
 		&ec2.DescribeImagesInput{
 			Owners: []string{"amazon"},
 			Filters: []ec2_types.Filter{
-				{
-					Name:   aws.String("name"),
-					Values: []string{"amazon/amzn-ami-hvm-2018.03.0.20220207.0-x86_64-gp2"},
-				},
-				{
-					Name:   aws.String("state"),
-					Values: []string{"available"},
-				},
-				{
-					Name:   aws.String("architecture"),
-					Values: []string{"x86_64"},
-				},
-				{
-					Name:   aws.String("root-device-type"),
-					Values: []string{"ebs"},
-				}},
+				{Name: aws.String("state"), Values: []string{"available"}},
+				{Name: aws.String("architecture"), Values: []string{"x86_64"}},
+				{Name: aws.String("root-device-type"), Values: []string{"ebs"}},
+			},
 		},
 	)
 	if err != nil {
 		amis = make([]string, len(defaultAmis))
 		copy(amis, defaultAmis)
 	} else {
+		// amis = make([]string, len(output.Images))
+		// for _, ami := range output.Images {
+		// 	amis = append(amis, aws.ToString(ami.ImageLocation))
+		// }
 		amis = make([]string, len(output.Images))
 		for _, ami := range output.Images {
-			amis = append(amis, aws.ToString(ami.ImageId))
+			if strings.Contains(aws.ToString(ami.ImageLocation), "amzn-ami-hvm") {
+				amis = append(amis, aws.ToString(ami.ImageId))
+			}
 		}
 	}
-	sort.Strings(amis)
+	sort.Sort(sort.Reverse(sort.StringSlice(amis)))
+	// sort.Strings(amis)
 
 	var ami string
 	prompt := &survey.Select{
