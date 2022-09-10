@@ -8,6 +8,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"govpn/internal"
 	"os"
@@ -17,10 +18,13 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	git "gopkg.in/src-d/go-git.v4"
 )
 
 const (
-	_defaultProfile = "default"
+	_defaultProfile       = "default"
+	_defaultTerraformPath = "./terraform-vpn-server"
+	_defaultGitUrl        = "https://github.com/ghdwlsgur/terraform"
 )
 
 var (
@@ -53,6 +57,32 @@ func panicRed(err error) {
 }
 
 func initConfig() {
+	// git clone https://github.com/ghdwlsgur/terraform-vpn-server
+	if _, err := os.Stat(_defaultTerraformPath); errors.Is(err, os.ErrNotExist) {
+		// repo-folder (terraform-vpn-server) does not exist
+		_, err := git.PlainClone(_defaultTerraformPath, false, &git.CloneOptions{
+			URL:      _defaultGitUrl,
+			Progress: os.Stdout,
+		})
+		if err != nil {
+			panicRed(err)
+		}
+	} else {
+		// repo-folder (terraform-vpn-server) exists
+		repository, err := git.PlainOpen(_defaultTerraformPath)
+		if err != nil {
+			panicRed(err)
+		}
+		worktree, err := repository.Worktree()
+		if err != nil {
+			panicRed(err)
+		}
+		err = worktree.Pull(&git.PullOptions{RemoteName: "origin"})
+		if err != nil {
+			fmt.Println(color.GreenString("terraform-vpn-server (%s)", err.Error()))
+		}
+	}
+
 	_credential = &Credential{}
 
 	awsProfile := viper.GetString("profile")
@@ -194,12 +224,6 @@ func initConfig() {
 		_credential.awsConfig.Region = askRegion.Name
 	}
 	color.Green("region (%s)", _credential.awsConfig.Region)
-
-	askAmi, err := internal.AskAmi(context.Background(), *_credential.awsConfig)
-	if err != nil {
-		panicRed(internal.WrapError(err))
-	}
-	color.Green("ami (%s)", askAmi.Name)
 
 }
 
