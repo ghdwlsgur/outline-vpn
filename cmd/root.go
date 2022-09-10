@@ -1,9 +1,3 @@
-/*
-Copyright © 2020 gjbae1212
-Released under the MIT license.
-(https://github.com/gjbae1212/gossm)
-*/
-
 package cmd
 
 import (
@@ -83,6 +77,11 @@ func initConfig() {
 		}
 	}
 
+	/*
+		Copyright © 2020 gjbae1212
+		Released under the MIT license.
+		(https://github.com/gjbae1212/gossm)
+	*/
 	_credential = &Credential{}
 
 	awsProfile := viper.GetString("profile")
