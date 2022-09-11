@@ -79,6 +79,6 @@ func DeleteStartSession(ctx context.Context, cfg aws.Config, input *ssm.Terminat
 	return err
 }
 
-func PrintReady(cmd, region, ami string) {
-	fmt.Printf("[%s] region: %s, ami: %s\n", color.GreenString(cmd), color.YellowString(region), color.YellowString(ami))
+func PrintReady(cmd, region, content, ami string) {
+	fmt.Printf("[%s] region: %s, %s: %s\n", color.GreenString(cmd), color.HiYellowString(region), content, color.HiYellowString(ami))
 }
