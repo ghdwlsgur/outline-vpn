@@ -29,7 +29,6 @@ var (
 	}
 
 	defaultInstanceType = "t2.micro"
-	defaultVpcTagName   = "govpn-vpc"
 )
 
 type (
@@ -45,78 +44,7 @@ type (
 	InstanceType struct {
 		Name string
 	}
-
-	DefaultVpc struct {
-		New       bool
-		Existence bool
-		Id        *string
-	}
 )
-
-func CreateDefaultVpc(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) {
-
-	client := ec2.NewFromConfig(cfg)
-
-	/* AWS CLI Command Reference (https://docs.aws.amazon.com/cli/latest/reference/ec2/create-default-vpc.html)
-	* Example========================================================
-	aws ec2 create-default-vpc --region us-east-1
-	=================================================================
-	*/
-	output, err := client.CreateDefaultVpc(ctx, &ec2.CreateDefaultVpcInput{})
-
-	if err != nil {
-		return &DefaultVpc{New: false}, fmt.Errorf(`
-⚠️  [privacy] Direct permission modification is required.
-1. Aws Console -> IAM -> Account Settings
-2. Click Activate for the region where you want to create the default VPC.
-		`)
-	} else {
-		_, err = client.CreateTags(ctx,
-			&ec2.CreateTagsInput{
-				Resources: []string{aws.ToString(output.Vpc.VpcId)},
-				Tags: []ec2_types.Tag{
-					{Key: aws.String("Name"), Value: aws.String(defaultVpcTagName)},
-				},
-			},
-		)
-		if err != nil {
-			return &DefaultVpc{New: true, Id: output.Vpc.VpcId}, fmt.Errorf("failed to create vpc tag")
-		}
-	}
-
-	return &DefaultVpc{New: true, Id: output.Vpc.VpcId}, nil
-}
-
-func DefaultVpcExists(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) {
-
-	client := ec2.NewFromConfig(cfg)
-
-	/* AWS CLI Command Reference (https://docs.aws.amazon.com/cli/latest/reference/ec2/describe-vpcs.html)
-	* Example========================================================
-	aws ec2 describe-vpcs \
-		--filters Name=is-default,Values=true Name=state,Values=available \
-		--region us-east-1
-	=================================================================
-	*/
-	output, err := client.DescribeVpcs(ctx,
-		&ec2.DescribeVpcsInput{
-			Filters: []ec2_types.Filter{
-				{Name: aws.String("is-default"), Values: []string{"true"}},
-				{Name: aws.String("state"), Values: []string{"available"}},
-			},
-		},
-	)
-	if err != nil {
-		return &DefaultVpc{Existence: false, New: false, Id: nil}, err
-
-	}
-
-	if len(output.Vpcs) > 0 {
-		return &DefaultVpc{Existence: true, New: false, Id: nil}, nil
-	} else {
-		return &DefaultVpc{Existence: false, New: false, Id: nil}, nil
-	}
-}
 
 func AskInstanceType(ctx context.Context, cfg aws.Config, az string) (*InstanceType, error) {
 	var instanceTypes []string
