@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"govpn/internal"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -16,9 +16,9 @@ var (
 		Long:  "Exec `start-session`",
 		Run: func(_ *cobra.Command, _ []string) {
 			var (
-				ami        *internal.Ami
-				az         *internal.AvailabilityZone
-				ec2Type    *internal.InstanceType
+				// ami        *internal.Ami
+				// az *internal.AvailabilityZone
+				// ec2Type    *internal.InstanceType
 				defaultVpc *internal.DefaultVpc
 				err        error
 			)
@@ -26,43 +26,61 @@ var (
 
 			defaultVpc, err = internal.DefaultVpcExists(ctx, *_credential.awsConfig)
 			if err != nil {
-				// defaultVpc.Existence false -> survey
 				panicRed(err)
 			}
 
-			check, err := internal.CreateDefaultVpc(ctx, *_credential.awsConfig)
+			if !defaultVpc.Existence {
+				answer, err := internal.AskCreateDefaultVpc()
+				if err != nil {
+					panicRed(err)
+				}
+
+				if answer == "Yes" {
+					vpc, err := internal.CreateDefaultVpc(ctx, *_credential.awsConfig)
+					if err != nil {
+						panicRed(err)
+					}
+					internal.PrintReady("create-vpc", _credential.awsConfig.Region, "vpc-id", vpc.Id)
+				} else {
+					os.Exit(1)
+				}
+			}
+
+			tagVpc, err := internal.TagVpcExists(ctx, *_credential.awsConfig)
 			if err != nil {
 				panicRed(err)
 			}
-			fmt.Println(check)
 
-			fmt.Println(defaultVpc.Existence)
-
-			if az == nil {
-				az, err = internal.AskAvailabilityZone(ctx, *_credential.awsConfig)
-				if err != nil {
-					panicRed(err)
-				}
-			}
-			internal.PrintReady("start-provisioning", _credential.awsConfig.Region, az.Name)
-
-			if ec2Type == nil {
-				ec2Type, err = internal.AskInstanceType(ctx, *_credential.awsConfig, az.Name)
-				if err != nil {
-					panicRed(err)
-				}
+			_, err = internal.DeleteTagVpc(ctx, *_credential.awsConfig, tagVpc.Id)
+			if err != nil {
+				panicRed(err)
 			}
 
-			internal.PrintReady("start-provisioning", _credential.awsConfig.Region, ec2Type.Name)
+			// if az == nil {
+			// 	az, err = internal.AskAvailabilityZone(ctx, *_credential.awsConfig)
+			// 	if err != nil {
+			// 		panicRed(err)
+			// 	}
+			// }
+			// internal.PrintReady("start-provisioning", _credential.awsConfig.Region, az.Name)
 
-			if ami == nil {
+			// if ec2Type == nil {
+			// 	ec2Type, err = internal.AskInstanceType(ctx, *_credential.awsConfig, az.Name)
+			// 	if err != nil {
+			// 		panicRed(err)
+			// 	}
+			// }
 
-				ami, err = internal.AskAmi(ctx, *_credential.awsConfig)
-				if err != nil {
-					panicRed(err)
-				}
-			}
-			internal.PrintReady("start-provisioning", _credential.awsConfig.Region, ami.Name)
+			// internal.PrintReady("start-provisioning", _credential.awsConfig.Region, ec2Type.Name)
+
+			// if ami == nil {
+
+			// 	ami, err = internal.AskAmi(ctx, *_credential.awsConfig)
+			// 	if err != nil {
+			// 		panicRed(err)
+			// 	}
+			// }
+			// internal.PrintReady("start-provisioning", _credential.awsConfig.Region, ami.Name)
 
 		},
 	}
