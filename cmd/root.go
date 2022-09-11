@@ -90,16 +90,20 @@ func initConfig() {
 
 	if _, err := os.Stat(_defaultTerraformVars); errors.Is(err, os.ErrNotExist) {
 		// terraform-vpn-server/terraform.tfvars.json does not exist
-		buffer, err := os.ReadFile(_defaultTerraformVars)
+
+		_terraformVarsJson = &TerraformVarsJson{"us-east-1", "ami-0cff7528ff583bf9a", "t2.micro"}
+
+		jsonData := make(map[string]interface{})
+		jsonData["aws_region"] = _terraformVarsJson.Aws_Region
+		jsonData["ec2_ami"] = _terraformVarsJson.Ec2_Ami
+		jsonData["instance_type"] = _terraformVarsJson.Instance_Type
+
+		varsJson, _ := json.Marshal(jsonData)
+		err := os.WriteFile("./terraform-vpn-server/terraform.tfvars.json", varsJson, os.FileMode(0644))
 		if err != nil {
 			panicRed(err)
 		}
-		_terraformVarsJson = &TerraformVarsJson{}
-		json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJson)
 
-		fmt.Println(_terraformVarsJson.Aws_Region)
-		fmt.Println(_terraformVarsJson.Ec2_Ami)
-		fmt.Println(_terraformVarsJson.Instance_Type)
 	} else {
 		// terraform-vpn-server/terraform.tfvars.json exists
 		buffer, err := os.ReadFile(_defaultTerraformVars)
@@ -108,10 +112,6 @@ func initConfig() {
 		}
 		_terraformVarsJson = &TerraformVarsJson{}
 		json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJson)
-
-		// fmt.Println(_terraformVarsJson.Aws_Region)
-		// fmt.Println(_terraformVarsJson.Ec2_Ami)
-		// fmt.Println(_terraformVarsJson.Instance_Type)
 	}
 
 	/*
