@@ -1,10 +1,7 @@
 package cmd
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"govpn/internal"
 	"os"
@@ -21,8 +18,6 @@ const (
 	// _defaultGitUrl        = "https://github.com/ghdwlsgur/terraform"
 )
 
-// _defaultTerraformPath = "./terraform-vpn-server"
-// _defaultTerraformVars = "./terraform-vpn-server/terraform.tfvars.json"
 var (
 	_defaultTerraformPath string
 	_defaultTerraformVars string
@@ -36,8 +31,6 @@ var (
 	_credential              *Credential
 	_credentialWithMFA       = fmt.Sprintf("%s_mfa", config.DefaultSharedConfigFilename())
 	_credentialWithTemporary = fmt.Sprintf("%s_temporary", config.DefaultSharedCredentialsFilename())
-
-	_terraformVarsJson *TerraformVarsJson
 )
 
 type TerraformVarsJson struct {
@@ -95,31 +88,31 @@ func initConfig() {
 	// 	}
 	// }
 
-	if _, err := os.Stat(_defaultTerraformVars); errors.Is(err, os.ErrNotExist) {
-		// terraform-vpn-server/terraform.tfvars.json does not exist
+	// if _, err := os.Stat(_defaultTerraformVars); errors.Is(err, os.ErrNotExist) {
+	// 	// terraform-vpn-server/terraform.tfvars.json does not exist
 
-		_terraformVarsJson = &TerraformVarsJson{"us-east-1", "ami-0cff7528ff583bf9a", "t2.micro", "ap-northeast-1d"}
+	// 	_terraformVarsJson = &TerraformVarsJson{"us-east-1", "ami-0cff7528ff583bf9a", "t2.micro", "us-east-1a"}
 
-		jsonData := make(map[string]interface{})
-		jsonData["aws_region"] = _terraformVarsJson.Aws_Region
-		jsonData["ec2_ami"] = _terraformVarsJson.Ec2_Ami
-		jsonData["instance_type"] = _terraformVarsJson.Instance_Type
-		jsonData["availability_zone"] = _terraformVarsJson.Availability_Zone
+	// 	jsonData := make(map[string]interface{})
+	// 	jsonData["aws_region"] = _terraformVarsJson.Aws_Region
+	// 	jsonData["ec2_ami"] = _terraformVarsJson.Ec2_Ami
+	// 	jsonData["instance_type"] = _terraformVarsJson.Instance_Type
+	// 	jsonData["availability_zone"] = _terraformVarsJson.Availability_Zone
 
-		varsJson, _ := json.Marshal(jsonData)
-		err := os.WriteFile(_defaultTerraformVars, varsJson, os.FileMode(0644))
-		if err != nil {
-			panicRed(err)
-		}
-	} else {
-		// terraform-vpn-server/terraform.tfvars.json exists
-		buffer, err := os.ReadFile(_defaultTerraformVars)
-		if err != nil {
-			panicRed(err)
-		}
-		_terraformVarsJson = &TerraformVarsJson{}
-		json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJson)
-	}
+	// 	varsJson, _ := json.Marshal(jsonData)
+	// 	err := os.WriteFile(_defaultTerraformVars, varsJson, os.FileMode(0644))
+	// 	if err != nil {
+	// 		panicRed(err)
+	// 	}
+	// } else {
+	// 	// terraform-vpn-server/terraform.tfvars.json exists
+	// 	buffer, err := os.ReadFile(_defaultTerraformVars)
+	// 	if err != nil {
+	// 		panicRed(err)
+	// 	}
+	// 	_terraformVarsJson = &TerraformVarsJson{}
+	// 	json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJson)
+	// }
 
 	/*=======================================================
 
