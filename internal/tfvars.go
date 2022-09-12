@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2_types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/fatih/color"
 )
 
 var (
@@ -33,6 +34,9 @@ var (
 	defaultInstanceType = "t2.micro"
 )
 
+var defaultInstanceTagName string
+var defaultKeyPairPath string
+
 type (
 	Ami struct {
 		Name          string
@@ -48,6 +52,22 @@ type (
 	}
 )
 
+func DeleteKeyPair() error {
+	err := os.Remove(defaultKeyPairPath)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func ExistsKeyPair() bool {
+	defaultKeyPairPath = fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".ssh/vpn_ec2_key.pem")
+	if _, err := os.Stat(defaultKeyPairPath); err == nil {
+		return true
+	}
+	return false
+}
+
 func SaveTerraformVariable(jsonData map[string]interface{}, jsonFilePath string) (string, error) {
 	jsonBuf, _ := json.Marshal(jsonData)
 	err := os.WriteFile(jsonFilePath, jsonBuf, os.FileMode(0644))
@@ -55,6 +75,48 @@ func SaveTerraformVariable(jsonData map[string]interface{}, jsonFilePath string)
 		return "failed to save file", err
 	}
 	return "save file successfully", nil
+}
+
+func FindTagEc2(ctx context.Context, cfg aws.Config) (bool, error) {
+
+	client := ec2.NewFromConfig(cfg)
+	defaultInstanceTagName = fmt.Sprintf("govpn-EC2-%s", cfg.Region)
+
+	output, err := client.DescribeInstances(ctx,
+		&ec2.DescribeInstancesInput{
+			Filters: []ec2_types.Filter{
+				{Name: aws.String("instance-state-name"), Values: []string{"running"}},
+				{Name: aws.String("tag:Name"), Values: []string{defaultInstanceTagName}},
+			},
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	if len(output.Reservations) > 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
+func AskNewTfVars(region, az, instanceType, ami string) (string, error) {
+
+	notice := color.New(color.Bold, color.FgHiCyan).PrintfFunc()
+	notice("[detect tfvars file]==================================\n\nRegion:\t\t\t%s\nAvailability Zone:\t%s\nInstance Type:\t\t%s\nAMI:\t\t\t%s\n\n======================================================\n", region, az, instanceType, ami)
+
+	prompt := &survey.Select{
+		Message: "Do you want to proceed as above:",
+		Options: []string{"Yes, I will it.", "No, I will change it."},
+	}
+
+	answer := ""
+	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
+		icons.SelectFocus.Format = "green+hb"
+	}), survey.WithPageSize(2)); err != nil {
+		return "No, I will change it.", err
+	}
+	return answer, nil
 }
 
 func AskInstanceType(ctx context.Context, cfg aws.Config, az string) (*InstanceType, error) {
