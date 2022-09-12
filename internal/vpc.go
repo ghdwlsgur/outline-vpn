@@ -141,7 +141,7 @@ func TagVpcExists(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) {
 	}
 
 	if len(output.Vpcs) > 0 {
-		return &DefaultVpc{Id: aws.ToString(output.Vpcs[0].VpcId)}, nil
+		return &DefaultVpc{Id: aws.ToString(output.Vpcs[0].VpcId), Existence: true}, nil
 	}
 
 	return &DefaultVpc{Existence: false, New: false}, nil
