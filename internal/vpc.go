@@ -28,7 +28,7 @@ func AskCreateDefaultVpc() (string, error) {
 	notice("⚠️   Sorry, you cannot proceed without a default VPC.\n")
 
 	prompt := &survey.Select{
-		Message: "Do You Create Default VPC (tag: govpn-vpc) ?",
+		Message: "Do You Create Default VPC (tag: govpn-vpc):",
 		Options: []string{"Yes", "No (exit)"},
 	}
 
@@ -44,7 +44,7 @@ func AskCreateDefaultVpc() (string, error) {
 
 func AskDeleteTagVpc() (string, error) {
 	prompt := &survey.Select{
-		Message: "Do You Delete Default VPC (tag: govpn-vpc) ?",
+		Message: "Do You Delete Default VPC (tag: govpn-vpc):",
 		Options: []string{"Yes", "No"},
 	}
 
