@@ -12,13 +12,28 @@ import (
 	"github.com/hashicorp/terraform-exec/tfexec"
 )
 
-func TerraformReady(ver string) (string, error) {
+func AskTerraformDestroy() (string, error) {
+	prompt := &survey.Select{
+		Message: "Do You Execute Terraform Destroy:",
+		Options: []string{"Yes", "No"},
+	}
+
+	answer := ""
+	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
+		icons.SelectFocus.Format = "green+hb"
+	}), survey.WithPageSize(2)); err != nil {
+		return "No", err
+	}
+	return answer, nil
+}
+
+func TerraformReady(ctx context.Context, ver string) (string, error) {
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
 		Version: version.Must(version.NewVersion(ver)),
 	}
 
-	execPath, err := installer.Install(context.Background())
+	execPath, err := installer.Install(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -59,7 +74,7 @@ func TerraformDestroy(terraformPath string) error {
 func AskTerraformApply() (string, error) {
 	prompt := &survey.Select{
 		Message: "Do You Provision EC2 Instance:",
-		Options: []string{"Yes", "No"},
+		Options: []string{"Yes", "No (exit)"},
 	}
 
 	answer := ""
