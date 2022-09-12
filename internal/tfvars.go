@@ -2,7 +2,9 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
@@ -45,6 +47,15 @@ type (
 		Name string
 	}
 )
+
+func SaveTerraformVariable(jsonData map[string]interface{}, jsonFilePath string) (string, error) {
+	jsonBuf, _ := json.Marshal(jsonData)
+	err := os.WriteFile(jsonFilePath, jsonBuf, os.FileMode(0644))
+	if err != nil {
+		return "failed to save file", err
+	}
+	return "save file successfully", nil
+}
 
 func AskInstanceType(ctx context.Context, cfg aws.Config, az string) (*InstanceType, error) {
 	var instanceTypes []string
