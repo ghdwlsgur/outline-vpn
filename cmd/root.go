@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"govpn/internal"
 	"os"
@@ -11,11 +12,12 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	git "gopkg.in/src-d/go-git.v4"
 )
 
 const (
 	_defaultProfile = "default"
-	// _defaultGitUrl        = "https://github.com/ghdwlsgur/terraform"
+	_defaultGitUrl  = "https://github.com/ghdwlsgur/terraform-vpn-server"
 )
 
 var (
@@ -63,56 +65,33 @@ func initConfig() {
 	_defaultTerraformVars = path + "/terraform-vpn-server/terraform.tfvars.json"
 
 	// git clone https://github.com/ghdwlsgur/terraform-vpn-server
-	// if _, err := os.Stat(_defaultTerraformPath); errors.Is(err, os.ErrNotExist) {
-	// 	// repo-folder (terraform-vpn-server) does not exist
-	// 	_, err := git.PlainClone(_defaultTerraformPath, false, &git.CloneOptions{
-	// 		URL:      _defaultGitUrl,
-	// 		Progress: os.Stdout,
-	// 	})
-	// 	if err != nil {
-	// 		panicRed(err)
-	// 	}
-	// } else {
-	// 	// repo-folder (terraform-vpn-server) exists
-	// 	repository, err := git.PlainOpen(_defaultTerraformPath)
-	// 	if err != nil {
-	// 		panicRed(err)
-	// 	}
-	// 	worktree, err := repository.Worktree()
-	// 	if err != nil {
-	// 		panicRed(err)
-	// 	}
-	// 	err = worktree.Pull(&git.PullOptions{RemoteName: "origin"})
-	// 	if err != nil {
-	// 		fmt.Println(color.GreenString("terraform-vpn-server (%s)", err.Error()))
-	// 	}
-	// }
-
-	// if _, err := os.Stat(_defaultTerraformVars); errors.Is(err, os.ErrNotExist) {
-	// 	// terraform-vpn-server/terraform.tfvars.json does not exist
-
-	// 	_terraformVarsJson = &TerraformVarsJson{"us-east-1", "ami-0cff7528ff583bf9a", "t2.micro", "us-east-1a"}
-
-	// 	jsonData := make(map[string]interface{})
-	// 	jsonData["aws_region"] = _terraformVarsJson.Aws_Region
-	// 	jsonData["ec2_ami"] = _terraformVarsJson.Ec2_Ami
-	// 	jsonData["instance_type"] = _terraformVarsJson.Instance_Type
-	// 	jsonData["availability_zone"] = _terraformVarsJson.Availability_Zone
-
-	// 	varsJson, _ := json.Marshal(jsonData)
-	// 	err := os.WriteFile(_defaultTerraformVars, varsJson, os.FileMode(0644))
-	// 	if err != nil {
-	// 		panicRed(err)
-	// 	}
-	// } else {
-	// 	// terraform-vpn-server/terraform.tfvars.json exists
-	// 	buffer, err := os.ReadFile(_defaultTerraformVars)
-	// 	if err != nil {
-	// 		panicRed(err)
-	// 	}
-	// 	_terraformVarsJson = &TerraformVarsJson{}
-	// 	json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJson)
-	// }
+	if _, err := os.Stat(_defaultTerraformPath); errors.Is(err, os.ErrNotExist) {
+		// repo-folder (terraform-vpn-server) does not exist
+		_, err := git.PlainClone(_defaultTerraformPath, false, &git.CloneOptions{
+			URL:      _defaultGitUrl,
+			Progress: os.Stdout,
+		})
+		if err != nil {
+			panicRed(err)
+		}
+		fmt.Println(color.GreenString("🎉 Terrafom File Download Complete! 🎉"))
+	} else {
+		// repo-folder (terraform-vpn-server) exists
+		repository, err := git.PlainOpen(_defaultTerraformPath)
+		if err != nil {
+			panicRed(err)
+		}
+		worktree, err := repository.Worktree()
+		if err != nil {
+			panicRed(err)
+		}
+		err = worktree.Pull(&git.PullOptions{RemoteName: "origin"})
+		if err != nil {
+			fmt.Println(color.GreenString("terraform-vpn-server \t(%s)", err.Error()))
+		} else {
+			fmt.Println(color.GreenString("terraform-vpn-server (%s)", "pull complete"))
+		}
+	}
 
 	/*=======================================================
 
@@ -261,7 +240,7 @@ func initConfig() {
 		}
 		_credential.awsConfig.Region = askRegion.Name
 	}
-	color.Green("region (%s)", _credential.awsConfig.Region)
+	color.Green("region \t\t\t(%s)\n\n", _credential.awsConfig.Region)
 
 }
 
