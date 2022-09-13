@@ -106,12 +106,6 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			ctx := context.Background()
 
-			// test
-			_, err := internal.FindTagInstanceAllRegion(ctx, *_credential.awsConfig)
-			if err != nil {
-				panicRed(err)
-			}
-
 			defaultVpc, err = internal.DefaultVpcExists(ctx, *_credential.awsConfig)
 			if err != nil {
 				panicRed(err)
