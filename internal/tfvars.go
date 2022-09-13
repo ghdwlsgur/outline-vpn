@@ -105,6 +105,38 @@ func SaveTerraformVariable(jsonData map[string]interface{}, jsonFilePath string)
 	return "save file successfully", nil
 }
 
+func FindSpecificTagInstance(ctx context.Context, cfg aws.Config, region string) (*EC2, error) {
+	client := ec2.NewFromConfig(cfg)
+	defaultInstanceTagName = fmt.Sprintf("govpn-ec2-%s", region)
+
+	output, err := client.DescribeInstances(ctx,
+		&ec2.DescribeInstancesInput{
+			Filters: []ec2_types.Filter{
+				{Name: aws.String("instance-state-name"), Values: []string{"running"}},
+				{Name: aws.String("tag:Name"), Values: []string{defaultInstanceTagName}},
+			},
+		},
+	)
+	if err != nil {
+		return &EC2{}, err
+	}
+
+	if len(output.Reservations) > 0 {
+		for _, reservations := range output.Reservations {
+			for _, ec2 := range reservations.Instances {
+				return &EC2{
+					Existence:    true,
+					Id:           aws.ToString(ec2.InstanceId),
+					PublicIP:     aws.ToString(ec2.PublicIpAddress),
+					LaunchTime:   aws.ToTime(ec2.LaunchTime),
+					InstanceType: aws.ToString((*string)(&ec2.InstanceType)),
+				}, nil
+			}
+		}
+	}
+	return &EC2{Existence: false}, nil
+}
+
 func FindTagInstance(ctx context.Context, cfg aws.Config) (*EC2, error) {
 
 	client := ec2.NewFromConfig(cfg)
