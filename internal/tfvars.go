@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -32,6 +35,7 @@ var (
 	}
 
 	defaultInstanceType = "t2.micro"
+	defaultIpv4Url      = "http://ipv4.icanhazip.com"
 )
 
 var defaultInstanceTagName string
@@ -50,7 +54,31 @@ type (
 	InstanceType struct {
 		Name string
 	}
+
+	EC2 struct {
+		Existence    bool
+		Id           string
+		PublicIP     string
+		LaunchTime   time.Time
+		InstanceType string
+	}
 )
+
+func CheckOutlineConnect(instance *EC2) (bool, error) {
+
+	resp, err := http.Get(defaultIpv4Url)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	buf, err := io.ReadAll(resp.Body)
+	currentIpv4 := strings.TrimSpace(string(buf))
+	if err != nil {
+		return false, err
+	}
+	return instance.PublicIP == currentIpv4, nil
+}
 
 func DeleteKeyPair() error {
 	err := os.Remove(defaultKeyPairPath)
@@ -77,10 +105,10 @@ func SaveTerraformVariable(jsonData map[string]interface{}, jsonFilePath string)
 	return "save file successfully", nil
 }
 
-func FindTagEc2(ctx context.Context, cfg aws.Config) (bool, error) {
+func FindTagInstance(ctx context.Context, cfg aws.Config) (*EC2, error) {
 
 	client := ec2.NewFromConfig(cfg)
-	defaultInstanceTagName = fmt.Sprintf("govpn-EC2-%s", cfg.Region)
+	defaultInstanceTagName = fmt.Sprintf("govpn-ec2-%s", cfg.Region)
 
 	output, err := client.DescribeInstances(ctx,
 		&ec2.DescribeInstancesInput{
@@ -91,19 +119,29 @@ func FindTagEc2(ctx context.Context, cfg aws.Config) (bool, error) {
 		},
 	)
 	if err != nil {
-		return false, err
+		return &EC2{}, err
 	}
 
 	if len(output.Reservations) > 0 {
-		return true, nil
+		for _, reservations := range output.Reservations {
+			for _, ec2 := range reservations.Instances {
+				return &EC2{
+					Existence:    true,
+					Id:           aws.ToString(ec2.InstanceId),
+					PublicIP:     aws.ToString(ec2.PublicIpAddress),
+					LaunchTime:   aws.ToTime(ec2.LaunchTime),
+					InstanceType: aws.ToString((*string)(&ec2.InstanceType)),
+				}, nil
+			}
+		}
 	}
-	return false, nil
+	return &EC2{Existence: false}, nil
 }
 
 func AskNewTfVars(region, az, instanceType, ami string) (string, error) {
 
 	notice := color.New(color.Bold, color.FgHiCyan).PrintfFunc()
-	notice("[detect tfvars file]==================================\n\nRegion:\t\t\t%s\nAvailability Zone:\t%s\nInstance Type:\t\t%s\nAMI:\t\t\t%s\n\n======================================================\n", region, az, instanceType, ami)
+	notice("[detect tfvars file]==================================\n\nRegion:\t\t\t%s\nAvailability Zone:\t%s\nInstance Type:\t\t%s\nAMI:\t\t\t%s\n\n======================================================\n\n", region, az, instanceType, ami)
 
 	prompt := &survey.Select{
 		Message: "Do you want to proceed as above:",
