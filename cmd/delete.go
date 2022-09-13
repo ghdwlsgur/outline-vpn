@@ -3,29 +3,57 @@ package cmd
 import (
 	"context"
 	"govpn/internal"
+	"os"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
 var (
-	deleteProvisionCommand = &cobra.Command{
+	deleteCommand = &cobra.Command{
 		Use:   "delete",
 		Short: "Exec test",
 		Long:  "Exec test",
 		Run: func(_ *cobra.Command, _ []string) {
+			var (
+				instance *internal.EC2
+			)
 
 			ctx := context.Background()
 
 			notice := color.New(color.Bold, color.FgHiRed).PrintfFunc()
 			congratulation := color.New(color.Bold, color.FgHiGreen).PrintFunc()
 
-			existServer, err := internal.FindTagEc2(ctx, *_credential.awsConfig)
+			tagSubnet, err := internal.ExistsTagSubnet(ctx, *_credential.awsConfig)
+			if err != nil {
+				panicRed(err)
+			}
+			if tagSubnet.Existence {
+				answer, err := internal.AskDeleteTagSubnet()
+				if err != nil {
+					panicRed(err)
+				}
+
+				if answer == "Yes" {
+					internal.DeleteTagSubnet(ctx, *_credential.awsConfig, tagSubnet.Id)
+				}
+			}
+
+			instance, err = internal.FindTagInstance(ctx, *_credential.awsConfig)
 			if err != nil {
 				panicRed(err)
 			}
 
-			if existServer {
+			if instance.Existence {
+				vpnConnect, err := internal.CheckOutlineConnect(instance)
+				if err != nil {
+					panicRed(err)
+				}
+				if vpnConnect {
+					notice("[err] Please Disconnect Outline VPN and Try Again\n")
+					os.Exit(1)
+				}
+
 				answer, err := internal.AskTerraformDestroy()
 				if err != nil {
 					panicRed(err)
@@ -37,7 +65,7 @@ var (
 					congratulation("🎉 Delete EC2 Instance Complete! 🎉")
 				}
 			} else {
-				notice("You haven't EC2 [govpn-EC2-%s]\n", _credential.awsConfig.Region)
+				notice("You haven't EC2 [govpn-ec2-%s]\n", _credential.awsConfig.Region)
 			}
 
 			if internal.ExistsKeyPair() {
@@ -70,5 +98,5 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(deleteProvisionCommand)
+	rootCmd.AddCommand(deleteCommand)
 }
