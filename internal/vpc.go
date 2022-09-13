@@ -23,41 +23,6 @@ type (
 	}
 )
 
-func AskCreateDefaultVpc() (string, error) {
-	notice := color.New(color.Bold, color.FgHiRed).PrintFunc()
-	notice("⚠️   Sorry, you cannot proceed without a default VPC.\n")
-
-	prompt := &survey.Select{
-		Message: "Do You Create Default VPC (tag: govpn-vpc):",
-		Options: []string{"Yes", "No (exit)"},
-	}
-
-	answer := ""
-	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.SelectFocus.Format = "green+hb"
-	}), survey.WithPageSize(2)); err != nil {
-		return "No", err
-	}
-
-	return answer, nil
-}
-
-func AskDeleteTagVpc() (string, error) {
-	prompt := &survey.Select{
-		Message: "Do You Delete Default VPC (tag: govpn-vpc):",
-		Options: []string{"Yes", "No"},
-	}
-
-	answer := ""
-	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.SelectFocus.Format = "green+hb"
-	}), survey.WithPageSize(2)); err != nil {
-		return "No", err
-	}
-
-	return answer, nil
-}
-
 func CreateDefaultVpc(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) {
 
 	client := ec2.NewFromConfig(cfg)
@@ -144,7 +109,60 @@ func TagVpcExists(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) {
 		return &DefaultVpc{Id: aws.ToString(output.Vpcs[0].VpcId), Existence: true}, nil
 	}
 
-	return &DefaultVpc{Existence: false, New: false}, nil
+	return &DefaultVpc{Existence: false}, nil
+}
+
+func DeleteTagVpc(ctx context.Context, cfg aws.Config, vpcId string) (bool, error) {
+	client := ec2.NewFromConfig(cfg)
+
+	if _, err := DeleteIgws(ctx, cfg, vpcId); err != nil {
+		return false, err
+	}
+
+	if _, err := DeleteSubnets(ctx, cfg, vpcId); err != nil {
+		return false, err
+	}
+
+	if _, err := client.DeleteVpc(ctx,
+		&ec2.DeleteVpcInput{VpcId: aws.String(vpcId)}); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func DeleteSubnets(ctx context.Context, cfg aws.Config, vpcId string) (bool, error) {
+	var subnetIds []string
+
+	client := ec2.NewFromConfig(cfg)
+
+	output, err := client.DescribeSubnets(ctx,
+		&ec2.DescribeSubnetsInput{
+			Filters: []ec2_types.Filter{
+				{Name: aws.String("vpc-id"), Values: []string{vpcId}},
+			},
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	subnetIds = make([]string, 0, len(output.Subnets))
+	for _, subnet := range output.Subnets {
+		subnetIds = append(subnetIds, aws.ToString(subnet.SubnetId))
+	}
+
+	for _, id := range subnetIds {
+		if _, err := client.DeleteSubnet(ctx,
+			&ec2.DeleteSubnetInput{
+				SubnetId: aws.String(id),
+			},
+		); err != nil {
+			return false, err
+		}
+	}
+
+	return true, nil
 }
 
 func DeleteIgws(ctx context.Context, cfg aws.Config, vpcId string) (bool, error) {
@@ -152,7 +170,7 @@ func DeleteIgws(ctx context.Context, cfg aws.Config, vpcId string) (bool, error)
 
 	client := ec2.NewFromConfig(cfg)
 
-	igwResponse, err := client.DescribeInternetGateways(ctx,
+	output, err := client.DescribeInternetGateways(ctx,
 		&ec2.DescribeInternetGatewaysInput{
 			Filters: []ec2_types.Filter{
 				{Name: aws.String("attachment.vpc-id"), Values: []string{vpcId}},
@@ -163,8 +181,8 @@ func DeleteIgws(ctx context.Context, cfg aws.Config, vpcId string) (bool, error)
 		return false, err
 	}
 
-	igwIds = make([]string, 0, len(igwResponse.InternetGateways))
-	for _, igw := range igwResponse.InternetGateways {
+	igwIds = make([]string, 0, len(output.InternetGateways))
+	for _, igw := range output.InternetGateways {
 		igwIds = append(igwIds, aws.ToString(igw.InternetGatewayId))
 	}
 
@@ -190,60 +208,37 @@ func DeleteIgws(ctx context.Context, cfg aws.Config, vpcId string) (bool, error)
 	return true, nil
 }
 
-func DeleteSubnets(ctx context.Context, cfg aws.Config, vpcId string) (bool, error) {
-	var subnetIds []string
+func AskCreateDefaultVpc() (string, error) {
+	notice := color.New(color.Bold, color.FgHiRed).PrintFunc()
+	notice("⚠️   Sorry, you cannot proceed without a default VPC.\n")
 
-	client := ec2.NewFromConfig(cfg)
-
-	subnetResponse, err := client.DescribeSubnets(ctx,
-		&ec2.DescribeSubnetsInput{
-			Filters: []ec2_types.Filter{
-				{Name: aws.String("vpc-id"), Values: []string{vpcId}},
-			},
-		},
-	)
-	if err != nil {
-		return false, err
+	prompt := &survey.Select{
+		Message: "Do You Create Default VPC (tag: govpn-vpc):",
+		Options: []string{"Yes", "No (exit)"},
 	}
 
-	subnetIds = make([]string, 0, len(subnetResponse.Subnets))
-	for _, subnet := range subnetResponse.Subnets {
-		subnetIds = append(subnetIds, aws.ToString(subnet.SubnetId))
-	}
-	for _, id := range subnetIds {
-		if _, err := client.DeleteSubnet(ctx,
-			&ec2.DeleteSubnetInput{
-				SubnetId: aws.String(id),
-			},
-		); err != nil {
-			return false, err
-		}
+	answer := ""
+	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
+		icons.SelectFocus.Format = "green+hb"
+	}), survey.WithPageSize(2)); err != nil {
+		return "No", err
 	}
 
-	return true, nil
+	return answer, nil
 }
 
-func DeleteTagVpc(ctx context.Context, cfg aws.Config, vpcId string) (bool, error) {
-	client := ec2.NewFromConfig(cfg)
-
-	_, delIgwErr := DeleteIgws(ctx, cfg, vpcId)
-	if delIgwErr != nil {
-		return false, delIgwErr
+func AskDeleteTagVpc() (string, error) {
+	prompt := &survey.Select{
+		Message: "Do You Delete Default VPC (tag: govpn-vpc):",
+		Options: []string{"Yes", "No"},
 	}
 
-	_, delSubnetErr := DeleteSubnets(ctx, cfg, vpcId)
-	if delSubnetErr != nil {
-		return false, delSubnetErr
+	answer := ""
+	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
+		icons.SelectFocus.Format = "green+hb"
+	}), survey.WithPageSize(2)); err != nil {
+		return "No", err
 	}
 
-	_, delVpcErr := client.DeleteVpc(ctx,
-		&ec2.DeleteVpcInput{
-			VpcId: aws.String(vpcId),
-		},
-	)
-	if delVpcErr != nil {
-		return false, delVpcErr
-	}
-
-	return true, nil
+	return answer, nil
 }
