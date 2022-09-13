@@ -20,22 +20,28 @@ const (
 )
 
 var (
-	ami                *internal.Ami
-	az                 *internal.AvailabilityZone
-	ec2Type            *internal.InstanceType
-	defaultVpc         *internal.DefaultVpc
-	defaultSubnet      *internal.DefaultSubnet
-	err                error
+	ami           *internal.Ami
+	az            *internal.AvailabilityZone
+	ec2Type       *internal.InstanceType
+	defaultVpc    *internal.DefaultVpc
+	defaultSubnet *internal.DefaultSubnet
+
+	instance *internal.EC2
+	err      error
+
 	_terraformVarsJson = &TerraformVarsJson{}
+	workSpace          = &internal.Workspace{}
 )
 
 func inputTfvars() {
 	ctx := context.Background()
 
-	_terraformVarsJson.Aws_Region = _credential.awsConfig.Region
-
-	notice := color.New(color.Bold, color.FgHiRed).PrintfFunc()
-	notice("⚠️\tIf you want to change region, restart `govpn start -r {region}`\n")
+	awsRegion, err := internal.AskRegion(ctx, *_credential.awsConfig)
+	if err != nil {
+		panicRed(err)
+	}
+	_credential.awsConfig.Region = awsRegion.Name
+	_terraformVarsJson.Aws_Region = awsRegion.Name
 
 	// user inputs Availability Zone value
 	if az == nil {
@@ -50,7 +56,11 @@ func inputTfvars() {
 	// If the user hasn't default subnet in availability zone, ask whether create or not
 	defaultSubnet, err = internal.ExistsDefaultSubnet(ctx, *_credential.awsConfig, az.Name)
 	if err != nil {
-		panicRed(err)
+		panicRed(fmt.Errorf(`
+		⚠️  [privacy] Direct permission modification is required.
+		1. Aws Console -> IAM -> Account Settings
+		2. Click Activate for the region where you want to create the default VPC.
+				`))
 	}
 
 	if !defaultSubnet.Existence {
@@ -63,6 +73,8 @@ func inputTfvars() {
 			if err != nil {
 				panicRed(err)
 			}
+		} else {
+			panicRed(fmt.Errorf("invalid default subnet"))
 		}
 	}
 
@@ -93,7 +105,8 @@ func inputTfvars() {
 	jsonData["instance_type"] = _terraformVarsJson.Instance_Type
 	jsonData["availability_zone"] = _terraformVarsJson.Availability_Zone
 
-	if _, err = internal.SaveTerraformVariable(jsonData, _defaultTerraformVars); err != nil {
+	_, err = internal.SaveTerraformVariable(jsonData, _defaultTerraformVars)
+	if err != nil {
 		panicRed(err)
 	}
 }
@@ -159,6 +172,35 @@ var (
 			}
 			internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "terraform-state", "ready")
 
+			workSpace, err = internal.ExistsWorkspace(ctx, execPath, _defaultTerraformPath, _credential.awsConfig.Region)
+			if err != nil {
+				panicRed(err)
+			}
+
+			if workSpace.Existence {
+				instance, err = internal.FindSpecificTagInstance(ctx, *_credential.awsConfig, _credential.awsConfig.Region)
+				if err != nil {
+					panicRed(err)
+				}
+
+				if instance.Existence {
+					panicRed(fmt.Errorf("[err] You already have EC2 %s", _credential.awsConfig.Region))
+				} else {
+					workSpace, err = internal.SelectWorkspace(ctx, execPath, _defaultTerraformPath, _credential.awsConfig.Region, workSpace)
+					if err != nil {
+						panicRed(err)
+					}
+					fmt.Printf("%s %s\n", color.HiCyanString("[terraform-workspace-select]"), workSpace.Now)
+				}
+			} else {
+				if err = internal.CreateWorkspace(ctx,
+					execPath, _defaultTerraformPath, _credential.awsConfig.Region); err != nil {
+					panicRed(err)
+				}
+				workSpace.Now = _credential.awsConfig.Region
+				fmt.Printf("%s %s\n", color.HiCyanString("[terraform-workspace-new]"), workSpace.Now)
+			}
+
 			// terraform init ===============================
 			if err = tf.Init(context.Background(), tfexec.Upgrade(true)); err != nil {
 				panicRed(fmt.Errorf("[err] failed to terraform init"))
@@ -166,7 +208,7 @@ var (
 			internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "terraform init", "success")
 
 			// terraform plan ===============================
-			if _, err = tf.Plan(context.Background(),
+			if _, err = tf.Plan(ctx,
 				tfexec.VarFile(_defaultTerraformVars)); err != nil {
 				panicRed(fmt.Errorf("[err] failed to terraform plan"))
 			}

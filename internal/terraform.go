@@ -12,6 +12,15 @@ import (
 	"github.com/hashicorp/terraform-exec/tfexec"
 )
 
+type (
+	Workspace struct {
+		Now       string
+		List      []string
+		Session   bool
+		Existence bool
+	}
+)
+
 func AskTerraformDestroy() (string, error) {
 	prompt := &survey.Select{
 		Message: "Do You Execute Terraform Destroy:",
@@ -85,4 +94,50 @@ func AskTerraformApply() (string, error) {
 	}
 
 	return answer, nil
+}
+
+func ExistsWorkspace(ctx context.Context, execPath, _defaultTerraformPath, regionName string) (*Workspace, error) {
+	tf, err := SetRoot(execPath, _defaultTerraformPath)
+	if err != nil {
+		return &Workspace{}, err
+	}
+	list, name, err := tf.WorkspaceList(ctx)
+	if err != nil {
+		return &Workspace{}, err
+	}
+
+	for _, workspace := range list {
+		if workspace == regionName {
+			return &Workspace{List: list, Now: name, Existence: true}, nil
+		}
+	}
+
+	return &Workspace{List: list, Now: name, Existence: false}, err
+}
+
+func SelectWorkspace(ctx context.Context, execPath, _defaultTerraformPath, regionName string, workspace *Workspace) (*Workspace, error) {
+
+	tf, err := SetRoot(execPath, _defaultTerraformPath)
+	if err != nil {
+		return &Workspace{}, err
+	}
+	err = tf.WorkspaceSelect(ctx, regionName)
+	if err != nil {
+		return &Workspace{}, err
+	}
+
+	workspace.Now = regionName
+	workspace.Session = true
+
+	return workspace, nil
+}
+
+func CreateWorkspace(ctx context.Context, execPath, _defaultTerraformPath, regionName string) error {
+
+	tf, _ := SetRoot(execPath, _defaultTerraformPath)
+	err := tf.WorkspaceNew(ctx, regionName)
+	if err != nil {
+		return err
+	}
+	return nil
 }
