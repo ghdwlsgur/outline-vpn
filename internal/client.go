@@ -122,5 +122,5 @@ func DeleteStartSession(ctx context.Context, cfg aws.Config, input *ssm.Terminat
 }
 
 func PrintReady(cmd, region, title, content string) {
-	fmt.Printf("%s aws-connect-region: %s, %s: %s\n", color.GreenString(cmd), color.HiYellowString(region), title, color.HiGreenString(content))
+	fmt.Printf("%s region: %s, %s: %s\n", color.GreenString(cmd), color.HiYellowString(region), title, color.HiGreenString(content))
 }
