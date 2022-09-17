@@ -17,7 +17,7 @@ import (
 
 const (
 	_defaultProfile = "default"
-	_defaultGitUrl  = "https://github.com/ghdwlsgur/terraform-vpn-server"
+	_defaultGitUrl  = "https://github.com/ghdwlsgur/govpn-terraform/govpn-module"
 )
 
 var (
@@ -61,12 +61,12 @@ func panicRed(err error) {
 
 func initConfig() {
 	path, _ := os.Getwd()
-	_defaultTerraformPath = path + "/terraform-vpn-server"
-	_defaultTerraformVars = path + "/terraform-vpn-server/terraform.tfvars.json"
+	_defaultTerraformPath = path + "/govpn-terraform"
+	_defaultTerraformVars = path + "/govpn-terraform/terraform.tfvars.json"
 
-	// git clone https://github.com/ghdwlsgur/terraform-vpn-server
+	// git clone https://github.com/ghdwlsgur/govpn-terraform
 	if _, err := os.Stat(_defaultTerraformPath); errors.Is(err, os.ErrNotExist) {
-		// repo-folder (terraform-vpn-server) does not exist
+		// repo-folder (govpn-terraform) does not exist
 		_, err := git.PlainClone(_defaultTerraformPath, false, &git.CloneOptions{
 			URL:      _defaultGitUrl,
 			Progress: os.Stdout,
@@ -76,7 +76,7 @@ func initConfig() {
 		}
 		fmt.Println(color.GreenString("🎉 Terrafom File Download Complete! 🎉"))
 	} else {
-		// repo-folder (terraform-vpn-server) exists
+		// repo-folder (govpn-terraform) exists
 		repository, err := git.PlainOpen(_defaultTerraformPath)
 		if err != nil {
 			panicRed(err)
@@ -87,9 +87,9 @@ func initConfig() {
 		}
 		err = worktree.Pull(&git.PullOptions{RemoteName: "origin"})
 		if err != nil {
-			fmt.Println(color.GreenString("terraform-vpn-server \t(%s)", err.Error()))
+			fmt.Println(color.GreenString("govpn-terraform \t(%s)", err.Error()))
 		} else {
-			fmt.Println(color.GreenString("terraform-vpn-server (%s)", "pull complete"))
+			fmt.Println(color.GreenString("govpn-terraform (%s)", "pull complete"))
 		}
 	}
 
