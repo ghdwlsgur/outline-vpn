@@ -17,7 +17,7 @@ import (
 
 const (
 	_defaultProfile = "default"
-	_defaultGitUrl  = "https://github.com/ghdwlsgur/govpn-terraform/govpn-module"
+	_defaultGitUrl  = "https://github.com/ghdwlsgur/govpn-module"
 )
 
 var (
