@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/hashicorp/go-version"
@@ -29,7 +28,7 @@ type (
 func AskTerraformDestroy() (string, error) {
 	prompt := &survey.Select{
 		Message: "Do You Execute Terraform Destroy:",
-		Options: []string{"Yes", "No"},
+		Options: []string{"Yes", "No (exit)"},
 	}
 
 	answer := ""
@@ -63,27 +62,39 @@ func SetRoot(execPath, terraformPath string) (*tfexec.Terraform, error) {
 	return tf, nil
 }
 
-func TerraformApply(terraformPath string) error {
-	cmd := exec.Command("sh", "command/deploy.sh")
-	cmd.Dir = terraformPath
-	cmd.Stdout = os.Stdout
+// deprecated
+// func TerraformApply(terraformPath string) error {
+// 	cmd := exec.Command("sh", "command/deploy.sh")
+// 	cmd.Dir = terraformPath
+// 	cmd.Stdout = os.Stdout
 
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
-}
+// 	if err := cmd.Run(); err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
-func TerraformDestroy(terraformPath string) error {
-	cmd := exec.Command("sh", "command/destroy.sh")
-	cmd.Dir = terraformPath
-	cmd.Stdout = os.Stdout
+// func TerraformDestroy(terraformPath string) error {
+// 	cmd := exec.Command("sh", "command/destroy.sh")
+// 	cmd.Dir = terraformPath
+// 	cmd.Stdout = os.Stdout
 
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
-}
+// 	if err := cmd.Run(); err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+
+// func TerraformDestroy(region string) error {
+// 	cmd := exec.Command("sh", "command/destroy.sh")
+// 	cmd.Dir = "/" + region
+// 	cmd.Stdout = os.Stdout
+
+// 	if err := cmd.Run(); err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 func AskTerraformApply() (string, error) {
 	prompt := &survey.Select{
