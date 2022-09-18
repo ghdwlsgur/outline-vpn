@@ -240,6 +240,7 @@ func initConfig() {
 		}
 		_credential.awsConfig.Region = askRegion.Name
 	}
+
 	color.Green("region \t\t\t(%s)\n\n", _credential.awsConfig.Region)
 
 }
