@@ -37,6 +37,7 @@ func inputTfvars() {
 	ctx := context.Background()
 
 	awsRegion, err := internal.AskRegion(ctx, *_credential.awsConfig)
+
 	if err != nil {
 		panicRed(err)
 	}
@@ -66,8 +67,15 @@ func inputTfvars() {
 	if !defaultSubnet.Existence {
 		answer, err := internal.AskCreateDefaultSubnet()
 		if err != nil {
-			panicRed(err)
+			if err != nil {
+				panicRed(fmt.Errorf(`
+				⚠️  [privacy] Direct permission modification is required.
+				1. Aws Console -> IAM -> Account Settings
+				2. Click Activate for the region where you want to create the default VPC.
+						`))
+			}
 		}
+
 		if answer == "Yes" {
 			_, err = internal.CreateDefaultSubnet(ctx, *_credential.awsConfig, az.Name)
 			if err != nil {
@@ -154,11 +162,19 @@ var (
 					panicRed(err)
 				}
 
+				_credential.awsConfig.Region = _terraformVarsJson.Aws_Region
+
 				if strings.Split(answer, ",")[0] == "No" {
 					inputTfvars()
 				}
 			} else {
 				inputTfvars()
+			}
+
+			workSpace.Path = _defaultTerraformPath + "/terraform.tfstate.d/" + _credential.awsConfig.Region
+			err := internal.CreateTf(workSpace.Path, _terraformVarsJson.Aws_Region, _terraformVarsJson.Ec2_Ami, _terraformVarsJson.Instance_Type, _terraformVarsJson.Availability_Zone)
+			if err != nil {
+				panicRed(err)
 			}
 
 			// terraform ready ===============================
