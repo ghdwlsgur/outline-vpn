@@ -62,40 +62,6 @@ func SetRoot(execPath, terraformPath string) (*tfexec.Terraform, error) {
 	return tf, nil
 }
 
-// deprecated
-// func TerraformApply(terraformPath string) error {
-// 	cmd := exec.Command("sh", "command/deploy.sh")
-// 	cmd.Dir = terraformPath
-// 	cmd.Stdout = os.Stdout
-
-// 	if err := cmd.Run(); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
-
-// func TerraformDestroy(terraformPath string) error {
-// 	cmd := exec.Command("sh", "command/destroy.sh")
-// 	cmd.Dir = terraformPath
-// 	cmd.Stdout = os.Stdout
-
-// 	if err := cmd.Run(); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
-
-// func TerraformDestroy(region string) error {
-// 	cmd := exec.Command("sh", "command/destroy.sh")
-// 	cmd.Dir = "/" + region
-// 	cmd.Stdout = os.Stdout
-
-// 	if err := cmd.Run(); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
-
 func AskTerraformApply() (string, error) {
 	prompt := &survey.Select{
 		Message: "Do You Provision EC2 Instance:",
