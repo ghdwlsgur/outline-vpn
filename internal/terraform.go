@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -9,7 +10,10 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/hc-install/product"
 	"github.com/hashicorp/hc-install/releases"
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/hashicorp/terraform-exec/tfexec"
+	"github.com/zclconf/go-cty/cty"
 )
 
 type (
@@ -18,6 +22,7 @@ type (
 		List      []string
 		Session   bool
 		Existence bool
+		Path      string
 	}
 )
 
@@ -140,4 +145,144 @@ func CreateWorkspace(ctx context.Context, execPath, _defaultTerraformPath, regio
 		return err
 	}
 	return nil
+}
+
+func CreateTf(workSpacePath string, region, ami, instanceType, az string) error {
+
+	mainErr := CreateMainDotTf(workSpacePath, region, ami, instanceType, az)
+	if mainErr != nil {
+		return mainErr
+	}
+
+	providerErr := CreateProviderDotTf(workSpacePath, region)
+	if providerErr != nil {
+		return providerErr
+	}
+
+	outputErr := CreateOutputDotTf(workSpacePath)
+	if outputErr != nil {
+		return outputErr
+	}
+
+	keyErr := CreateKeyDotTf(workSpacePath)
+	if keyErr != nil {
+		return keyErr
+	}
+
+	return nil
+}
+
+func CreateMainDotTf(workSpacePath string, region, ami, instanceType, az string) error {
+	var fileName = fmt.Sprintf(workSpacePath + "/main.tf")
+	const sourceRoot = "../../module/instance"
+
+	f := hclwrite.NewEmptyFile()
+	rootBody := f.Body()
+
+	moduleBlock := rootBody.AppendNewBlock("module", []string{"instance"})
+	moduleBody := moduleBlock.Body()
+	moduleBody.SetAttributeValue("source", cty.StringVal(sourceRoot))
+	moduleBody.SetAttributeValue("aws_region", cty.StringVal(region))
+	moduleBody.SetAttributeValue("ec2_ami", cty.StringVal(ami))
+	moduleBody.SetAttributeValue("instance_type", cty.StringVal(instanceType))
+	moduleBody.SetAttributeValue("availability_zone", cty.StringVal(az))
+	moduleBody.SetAttributeTraversal("key_name", hcl.Traversal{
+		hcl.TraverseRoot{Name: "aws_key_pair"},
+		hcl.TraverseAttr{Name: "govpn_key"},
+		hcl.TraverseAttr{Name: "key_name"},
+	})
+	moduleBody.SetAttributeTraversal("private_key_openssh", hcl.Traversal{
+		hcl.TraverseRoot{Name: "tls_private_key"},
+		hcl.TraverseAttr{Name: "tls"},
+		hcl.TraverseAttr{Name: "private_key_openssh"},
+	})
+	moduleBody.SetAttributeTraversal("private_key_pem", hcl.Traversal{
+		hcl.TraverseRoot{Name: "tls_private_key"},
+		hcl.TraverseAttr{Name: "tls"},
+		hcl.TraverseAttr{Name: "private_key_pem"},
+	})
+
+	if err := os.WriteFile(fileName, f.Bytes(), 0644); err != nil {
+		return err
+	}
+	return nil
+}
+
+func CreateProviderDotTf(workSpacePath string, region string) error {
+	var fileName = fmt.Sprintf(workSpacePath + "/provider.tf")
+
+	f := hclwrite.NewEmptyFile()
+	rootBody := f.Body()
+
+	providerBlock := rootBody.AppendNewBlock("provider", []string{"aws"})
+	providerBody := providerBlock.Body()
+	providerBody.SetAttributeValue("region", cty.StringVal(region))
+
+	if err := os.WriteFile(fileName, f.Bytes(), 0644); err != nil {
+		return err
+	}
+	return nil
+}
+
+func CreateOutputDotTf(workSpacePath string) error {
+	var fileName = fmt.Sprintf(workSpacePath + "/output.tf")
+
+	f := hclwrite.NewEmptyFile()
+	rootBody := f.Body()
+
+	sshPrivateKeyBlock := rootBody.AppendNewBlock("output", []string{"ssh_private_key"})
+	sshPrivateKeyBody := sshPrivateKeyBlock.Body()
+	sshPrivateKeyBody.SetAttributeTraversal("value", hcl.Traversal{
+		hcl.TraverseRoot{Name: "tls_private_key"},
+		hcl.TraverseAttr{Name: "tls"},
+		hcl.TraverseAttr{Name: "private_key_pem"},
+	})
+	sshPrivateKeyBody.SetAttributeValue("sensitive", cty.BoolVal(true))
+
+	rootBody.AppendNewline()
+
+	accessKeyBlock := rootBody.AppendNewBlock("output", []string{"access_key"})
+	accessKeyBody := accessKeyBlock.Body()
+	accessKeyBody.SetAttributeTraversal("value", hcl.Traversal{
+		hcl.TraverseRoot{Name: "module"},
+		hcl.TraverseAttr{Name: "instance"},
+		hcl.TraverseAttr{Name: "OutlineClientAccessKey"},
+	})
+
+	if err := os.WriteFile(fileName, f.Bytes(), 0644); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateKeyDotTf(workSpacePath string) error {
+	var fileName = fmt.Sprintf(workSpacePath + "/key.tf")
+
+	f := hclwrite.NewEmptyFile()
+	rootBody := f.Body()
+
+	tlsBlock := rootBody.AppendNewBlock("resource", []string{"tls_private_key", "tls"})
+	tlsBody := tlsBlock.Body()
+	tlsBody.SetAttributeValue("algorithm", cty.StringVal("RSA"))
+	tlsBody.SetAttributeValue("rsa_bits", cty.NumberIntVal(4096))
+
+	rootBody.AppendNewline()
+
+	govpnBlock := rootBody.AppendNewBlock("resource", []string{"aws_key_pair", "govpn_key"})
+	govpnBody := govpnBlock.Body()
+	govpnBody.SetAttributeTraversal("key_name", hcl.Traversal{
+		hcl.TraverseRoot{Name: "\"govpn_${module.instance.Region}\""},
+	})
+	govpnBody.SetAttributeTraversal("public_key", hcl.Traversal{
+		hcl.TraverseRoot{Name: "tls_private_key"},
+		hcl.TraverseAttr{Name: "tls"},
+		hcl.TraverseAttr{Name: "public_key_openssh"},
+	})
+
+	if err := os.WriteFile(fileName, f.Bytes(), 0644); err != nil {
+		return err
+	}
+	return nil
+
 }
