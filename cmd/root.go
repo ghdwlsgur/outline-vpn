@@ -17,7 +17,7 @@ import (
 
 const (
 	_defaultProfile = "default"
-	_defaultGitUrl  = "https://github.com/ghdwlsgur/govpn-module"
+	_defaultGitUrl  = "https://github.com/ghdwlsgur/govpn-terraform"
 )
 
 var (
@@ -240,7 +240,6 @@ func initConfig() {
 		}
 		_credential.awsConfig.Region = askRegion.Name
 	}
-
 	color.Green("region \t\t\t(%s)\n\n", _credential.awsConfig.Region)
 
 }
