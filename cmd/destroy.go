@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"govpn/internal"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
@@ -61,6 +63,12 @@ var (
 				}
 
 				if answer == "Yes" {
+					s := spinner.New(spinner.CharSets[8], 100*time.Millisecond)
+					s.UpdateCharSet(spinner.CharSets[59])
+					s.Color("fgHiRed")
+					s.Restart()
+					s.Prefix = color.HiRedString("EC2 Destroying ")
+
 					workSpace.Path = _defaultTerraformPath + "/terraform.tfstate.d/" + _credential.awsConfig.Region
 
 					// terraform ready [workspace] =============================================
@@ -102,7 +110,25 @@ var (
 						panicRed(err)
 					}
 
+					ctx, cancel := context.WithTimeout(ctx, time.Minute)
+					defer cancel()
+
+					s.Stop()
 					congratulation("🎉 Delete EC2 Instance Complete! 🎉")
+
+					go func() {
+						cancel()
+					}()
+
+				delay:
+					for {
+						select {
+						case <-time.After(time.Second):
+						case <-ctx.Done():
+							break delay
+						}
+					}
+
 				}
 			} else {
 				notice("You haven't EC2 [govpn-ec2-%s]\n", _credential.awsConfig.Region)
@@ -134,6 +160,7 @@ var (
 					congratulation("🎉 Delete VPC Complete! 🎉")
 				}
 			}
+
 		},
 	}
 )
