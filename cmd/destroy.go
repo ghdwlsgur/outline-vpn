@@ -14,8 +14,8 @@ import (
 var (
 	destroyCommand = &cobra.Command{
 		Use:   "destroy",
-		Short: "Exec test",
-		Long:  "Exec test",
+		Short: "Exec `destroy` under Terraform Destroy with interactive CLI",
+		Long:  "Exec `destroy` under Terraform Destroy with interactive CLI",
 		Run: func(_ *cobra.Command, _ []string) {
 			var (
 				instance *internal.EC2

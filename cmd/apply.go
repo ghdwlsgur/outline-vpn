@@ -14,7 +14,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -38,8 +37,8 @@ var (
 var (
 	applyCommand = &cobra.Command{
 		Use:   "apply",
-		Short: "Exec `start-session`",
-		Long:  "Exec `start-session`",
+		Short: "Exec `apply` under Terraform Apply with interactive CLI",
+		Long:  "Exec `apply` under Terraform Apply with interactive CLI",
 		Run: func(_ *cobra.Command, _ []string) {
 			ctx := context.Background()
 
@@ -363,8 +362,5 @@ func scanVariable(ctx context.Context) error {
 }
 
 func init() {
-	applyCommand.Flags().StringP("ami", "a", "", "")
-	viper.BindPFlag("start-session-target", applyCommand.Flags().Lookup("ami"))
-
 	rootCmd.AddCommand(applyCommand)
 }
