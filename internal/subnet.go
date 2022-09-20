@@ -22,29 +22,6 @@ type (
 	}
 )
 
-func ExistsTagSubnet(ctx context.Context, cfg aws.Config) (*DefaultSubnet, error) {
-	client := ec2.NewFromConfig(cfg)
-
-	output, err := client.DescribeSubnets(ctx,
-		&ec2.DescribeSubnetsInput{
-			Filters: []ec2_types.Filter{
-				{Name: aws.String("tag:Name"), Values: []string{defaultSubnetTagName}},
-			},
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(output.Subnets) > 0 {
-		return &DefaultSubnet{Id: aws.ToString(output.Subnets[0].SubnetId), Existence: true}, nil
-	}
-
-	return &DefaultSubnet{Existence: false}, nil
-}
-
-// aws ec2 create-default-subnet --availability-zone ap-northeast-2a
-
 func CreateDefaultSubnet(ctx context.Context, cfg aws.Config, az string) (*DefaultSubnet, error) {
 
 	client := ec2.NewFromConfig(cfg)
@@ -56,32 +33,14 @@ func CreateDefaultSubnet(ctx context.Context, cfg aws.Config, az string) (*Defau
 	)
 	if err != nil {
 		return &DefaultSubnet{}, err
-	}
-
-	_, err = client.CreateTags(ctx,
-		&ec2.CreateTagsInput{
-			Resources: []string{aws.ToString(output.Subnet.SubnetId)},
-			Tags: []ec2_types.Tag{
-				{Key: aws.String("Name"), Value: aws.String(defaultSubnetTagName)},
-			},
-		},
-	)
-	if err != nil {
-		return &DefaultSubnet{New: true}, err
+	} else {
+		err := CreateTags(ctx, cfg, output.Subnet.SubnetId, defaultSubnetTagName)
+		if err != nil {
+			return &DefaultSubnet{New: true}, err
+		}
 	}
 
 	return &DefaultSubnet{New: true, Id: aws.ToString(output.Subnet.SubnetId)}, nil
-}
-
-func DeleteTagSubnet(ctx context.Context, cfg aws.Config, subnetId string) (bool, error) {
-	client := ec2.NewFromConfig(cfg)
-
-	if _, err := client.DeleteSubnet(ctx,
-		&ec2.DeleteSubnetInput{SubnetId: aws.String(subnetId)}); err != nil {
-		return false, err
-	}
-
-	return true, nil
 }
 
 func ExistsDefaultSubnet(ctx context.Context, cfg aws.Config, az string) (*DefaultSubnet, error) {
@@ -113,6 +72,38 @@ func ExistsDefaultSubnet(ctx context.Context, cfg aws.Config, az string) (*Defau
 	}
 
 	return &DefaultSubnet{Existence: false}, nil
+}
+
+func ExistsTagSubnet(ctx context.Context, cfg aws.Config) (*DefaultSubnet, error) {
+	client := ec2.NewFromConfig(cfg)
+
+	output, err := client.DescribeSubnets(ctx,
+		&ec2.DescribeSubnetsInput{
+			Filters: []ec2_types.Filter{
+				{Name: aws.String("tag:Name"), Values: []string{defaultSubnetTagName}},
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(output.Subnets) > 0 {
+		return &DefaultSubnet{Id: aws.ToString(output.Subnets[0].SubnetId), Existence: true}, nil
+	}
+
+	return &DefaultSubnet{Existence: false}, nil
+}
+
+func DeleteTagSubnet(ctx context.Context, cfg aws.Config, subnetId string) (bool, error) {
+	client := ec2.NewFromConfig(cfg)
+
+	if _, err := client.DeleteSubnet(ctx,
+		&ec2.DeleteSubnetInput{SubnetId: aws.String(subnetId)}); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func AskCreateDefaultSubnet() (string, error) {

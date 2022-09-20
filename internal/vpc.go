@@ -33,31 +33,19 @@ func CreateDefaultVpc(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) 
 	=================================================================
 	*/
 	output, err := client.CreateDefaultVpc(ctx, &ec2.CreateDefaultVpcInput{})
-
 	if err != nil {
-		return &DefaultVpc{New: false}, fmt.Errorf(`
-⚠️  [privacy] Direct permission modification is required.
-1. Aws Console -> IAM -> Account Settings
-2. Click Activate for the region where you want to create the default VPC.
-		`)
+		return &DefaultVpc{}, err
 	} else {
-		_, err = client.CreateTags(ctx,
-			&ec2.CreateTagsInput{
-				Resources: []string{aws.ToString(output.Vpc.VpcId)},
-				Tags: []ec2_types.Tag{
-					{Key: aws.String("Name"), Value: aws.String(defaultVpcTagName)},
-				},
-			},
-		)
+		err := CreateTags(ctx, cfg, output.Vpc.VpcId, defaultVpcTagName)
 		if err != nil {
-			return &DefaultVpc{New: true, Id: aws.ToString(output.Vpc.VpcId)}, fmt.Errorf("failed to create vpc tag")
+			return &DefaultVpc{New: true}, err
 		}
 	}
 
 	return &DefaultVpc{New: true, Id: aws.ToString(output.Vpc.VpcId)}, nil
 }
 
-func DefaultVpcExists(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) {
+func ExistsDefaultVpc(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) {
 
 	client := ec2.NewFromConfig(cfg)
 
@@ -91,7 +79,7 @@ func DefaultVpcExists(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) 
 	return &DefaultVpc{Existence: false, New: false}, nil
 }
 
-func TagVpcExists(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) {
+func ExistsTagVpc(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) {
 	client := ec2.NewFromConfig(cfg)
 
 	output, err := client.DescribeVpcs(ctx,
