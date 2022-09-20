@@ -51,6 +51,6 @@ brews:
       owner: ghdwlsgur
       name: homebrew-govpn
     commit_author:
-      name: ghdwlsgur
+      name: HongJinHyeok
       email: vjinhyeokv@gmail.com
     description: "govpn helps you easily and quickly provision EC2 with terraform and consume vpn service on your mobile or computer via outline application."
