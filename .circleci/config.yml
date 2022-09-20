@@ -1,4 +1,6 @@
 version: 2.1
+orbs:
+  goreleaser: hubci/goreleaser@2.1.0
 jobs:
   build:
     working_directory: /go/src/github.com/ghdwlsgur/govpn
@@ -16,6 +18,10 @@ jobs:
 workflows:
   build:
     jobs:
+      - gor/release:
+          version: 0.1.1
+          go-version: "1.19"
+          dry-run: true
       - build:
           filters:
             branches:
