@@ -7,6 +7,7 @@
 
 </div>
 
-https://user-images.githubusercontent.com/77400522/191279728-1a9b500b-3146-4ea7-b6bd-1a3a7a9fc74c.mov
 
-https://user-images.githubusercontent.com/77400522/191282566-ddfcad4f-827b-43cf-ab9a-c8acb418ac09.mov
+
+
+![destroy_example](https://user-images.githubusercontent.com/77400522/191326809-38cef2cc-3898-4e77-825b-716b8a6db30c.gif)
