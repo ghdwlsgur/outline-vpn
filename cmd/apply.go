@@ -5,13 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"govpn/internal"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
+	"github.com/ghdwlsgur/govpn/internal"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/spf13/cobra"
 )

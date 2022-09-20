@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"govpn/internal"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/fatih/color"
+	"github.com/ghdwlsgur/govpn/internal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	git "gopkg.in/src-d/go-git.v4"

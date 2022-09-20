@@ -3,11 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"govpn/internal"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
+	"github.com/ghdwlsgur/govpn/internal"
 	"github.com/spf13/cobra"
 )
 
