@@ -12,7 +12,7 @@ import (
 	"runtime"
 	"strings"
 
-	"govpn/wraperror"
+	"github.com/ghdwlsgur/govpn/wraperror"
 )
 
 var (
