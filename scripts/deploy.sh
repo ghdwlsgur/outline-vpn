@@ -34,9 +34,7 @@ function release
      echo "not found tag name"
      exit 1
   fi
-
-  
-
+ 
   git config --global user.name "HongJinHyeok"
   git config --global user.email vjinhyeokv@gmail.com
 
