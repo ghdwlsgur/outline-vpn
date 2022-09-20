@@ -23,8 +23,8 @@ function test_with_circleci
 
 function release
 {
-  sudo rm -rf $CURRENT/dist
-  sudo rm -rf $CURRENT/gopath
+  rm -rf $CURRENT/dist
+  rm -rf $CURRENT/gopath
   export GOPATH=$CURRENT/gopath
 
   tag=$1
