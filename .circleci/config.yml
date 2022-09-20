@@ -12,7 +12,7 @@ jobs:
           name: RUN UNIT TEST
           environment:
             GO111MODULE: "on"
-          command: bash scripts/deploy.sh release v0.1.1
+          command: bash scripts/deploy.sh release_test
 workflows:
   build:
     jobs:
