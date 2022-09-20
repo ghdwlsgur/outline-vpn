@@ -35,7 +35,7 @@ function release
   fi
 
   git tag -a $tag -m "Add $tag"
-  git push origin $tag
+  git push origin master
 
   goreleaser release --rm-dist
 }
