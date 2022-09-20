@@ -22,10 +22,9 @@ function test_with_circleci
 }
 
 function release
-{
-  brew install goreleaser 
-  rm -rf $CURRENT/dist
-  rm -rf $CURRENT/gopath
+{  
+  sudo rm -rf $CURRENT/dist
+  sudo rm -rf $CURRENT/gopath
   export GOPATH=$CURRENT/gopath
 
   tag=$1
@@ -46,8 +45,8 @@ function release
 
 function release_test
 {
-  rm -rf $CURRENT/dist
-  rm -rf $CURRENT/gopath
+  sudo rm -rf $CURRENT/dist
+  sudo rm -rf $CURRENT/gopath
   export GOPATH=$CURRENT/gopath
   goreleaser release --snapshot --rm-dist
 }
