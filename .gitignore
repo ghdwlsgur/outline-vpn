@@ -1,3 +1,4 @@
 govpn-terraform
 dist/
 vendor
+gopath 
