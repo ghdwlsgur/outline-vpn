@@ -18,10 +18,6 @@ jobs:
 workflows:
   build:
     jobs:
-      - gor/release:
-          version: 0.1.1
-          go-version: "1.19"
-          dry-run: true
       - build:
           filters:
             branches:
