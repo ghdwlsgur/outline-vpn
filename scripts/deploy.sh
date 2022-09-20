@@ -38,7 +38,7 @@ function release
   git config --global user.email vjinhyeokv@gmail.com
 
   git tag -a $tag -m "Add $tag"
-  git push origin master
+  git push origin $tag
 
   goreleaser release --rm-dist
 }
