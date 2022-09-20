@@ -22,7 +22,7 @@ builds:
       - all=-trimpath={{.Env.GOPATH}}
     ldflags:
       - -s -w
-      - -X main.govpnVersion=v1.0.0
+      - -X main.govpnVersion=v0.1.1
     ignore:
       - goos: windows
         goarch: arm64
