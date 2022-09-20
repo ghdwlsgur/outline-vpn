@@ -45,8 +45,8 @@ function release
 
 function release_test
 {
-  sudo rm -rf $CURRENT/dist
-  sudo rm -rf $CURRENT/gopath
+  rm -rf $CURRENT/dist
+  rm -rf $CURRENT/gopath
   export GOPATH=$CURRENT/gopath
   goreleaser release --snapshot --rm-dist
 }
