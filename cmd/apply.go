@@ -43,7 +43,60 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			ctx := context.Background()
 
-			defaultVpc, err = internal.DefaultVpcExists(ctx, *_credential.awsConfig)
+			if _, err := os.Stat(_defaultTerraformVars); err == nil {
+
+				buffer, err := os.ReadFile(_defaultTerraformVars)
+				if err != nil {
+					panicRed(err)
+				}
+				json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJson)
+
+				answer, err := internal.AskNewTfVars(_terraformVarsJson.Aws_Region, _terraformVarsJson.Availability_Zone, _terraformVarsJson.Instance_Type, _terraformVarsJson.Ec2_Ami)
+				if err != nil {
+					panicRed(err)
+				}
+				_credential.awsConfig.Region = _terraformVarsJson.Aws_Region
+
+				if strings.Split(answer, ",")[0] == "No" {
+					askRegion, err := internal.AskRegion(ctx, *_credential.awsConfig)
+					if err != nil {
+						panicRed(err)
+					}
+					_credential.awsConfig.Region = askRegion.Name
+
+					defaultVpc, err = internal.ExistsDefaultVpc(ctx, *_credential.awsConfig)
+					if err != nil {
+						panicRed(err)
+					}
+
+					if !defaultVpc.Existence {
+						answer, err := internal.AskCreateDefaultVpc()
+						if err != nil {
+							panicRed(err)
+						}
+
+						if answer == "Yes" {
+							vpc, err := internal.CreateDefaultVpc(ctx, *_credential.awsConfig)
+							if err != nil {
+								panicRed(err)
+							}
+							internal.PrintReady("[create-vpc]", _credential.awsConfig.Region, "vpc-id", vpc.Id)
+						} else {
+							os.Exit(1)
+						}
+					}
+
+					scanVariable(ctx)
+				}
+			} else {
+				scanVariable(ctx)
+			}
+
+			if _credential.awsConfig.Region != _terraformVarsJson.Aws_Region {
+				panicRed(err)
+			}
+
+			defaultVpc, err = internal.ExistsDefaultVpc(ctx, *_credential.awsConfig)
 			if err != nil {
 				panicRed(err)
 			}
@@ -63,26 +116,6 @@ var (
 				} else {
 					os.Exit(1)
 				}
-			}
-
-			if _, err := os.Stat(_defaultTerraformVars); err == nil {
-
-				buffer, err := os.ReadFile(_defaultTerraformVars)
-				if err != nil {
-					panicRed(err)
-				}
-				json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJson)
-
-				answer, err := internal.AskNewTfVars(_terraformVarsJson.Aws_Region, _terraformVarsJson.Availability_Zone, _terraformVarsJson.Instance_Type, _terraformVarsJson.Ec2_Ami)
-				if err != nil {
-					panicRed(err)
-				}
-
-				if strings.Split(answer, ",")[0] == "No" {
-					scanVariable(ctx)
-				}
-			} else {
-				scanVariable(ctx)
 			}
 
 			// terraform ready [root] =============================================
@@ -178,21 +211,20 @@ var (
 				s.Restart()
 				s.Prefix = color.HiGreenString("EC2 Creating ")
 
-				// workSpaceTf.SetStdout(os.Stdout)
 				// terraform apply [workspace] =============================================
 				err = workSpaceTf.Apply(ctx)
 				if err != nil {
 					panicRed(fmt.Errorf("failed to terraform apply"))
 				}
 
+				ctx, cancel := context.WithTimeout(ctx, time.Minute)
+				defer cancel()
+
 				// terraform show [workspace] =============================================
 				state, err := workSpaceTf.Show(ctx)
 				if err != nil {
 					panicRed(err)
 				}
-
-				ctx, cancel := context.WithTimeout(ctx, time.Minute)
-				defer cancel()
 
 				s.Stop()
 				congratulation := color.New(color.Bold, color.FgHiGreen).PrintFunc()
@@ -211,7 +243,6 @@ var (
 						break delay
 					}
 				}
-
 			}
 		},
 	}
@@ -227,6 +258,28 @@ func scanVariable(ctx context.Context) error {
 		_credential.awsConfig.Region = askRegion.Name
 	}
 	_terraformVarsJson.Aws_Region = _credential.awsConfig.Region
+
+	defaultVpc, err = internal.ExistsDefaultVpc(ctx, *_credential.awsConfig)
+	if err != nil {
+		panicRed(err)
+	}
+
+	if !defaultVpc.Existence {
+		answer, err := internal.AskCreateDefaultVpc()
+		if err != nil {
+			panicRed(err)
+		}
+
+		if answer == "Yes" {
+			vpc, err := internal.CreateDefaultVpc(ctx, *_credential.awsConfig)
+			if err != nil {
+				panicRed(err)
+			}
+			internal.PrintReady("[create-vpc]", _credential.awsConfig.Region, "vpc-id", vpc.Id)
+		} else {
+			os.Exit(1)
+		}
+	}
 
 	// user inputs Availability Zone value
 	if az == nil {

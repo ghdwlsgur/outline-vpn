@@ -114,7 +114,7 @@ var (
 					defer cancel()
 
 					s.Stop()
-					congratulation("🎉 Delete EC2 Instance Complete! 🎉")
+					congratulation("🎉 Delete EC2 Instance Complete! 🎉\n")
 
 					go func() {
 						cancel()
@@ -141,7 +141,7 @@ var (
 				}
 			}
 
-			tagVpc, err := internal.TagVpcExists(ctx, *_credential.awsConfig)
+			tagVpc, err := internal.ExistsTagVpc(ctx, *_credential.awsConfig)
 			if err != nil {
 				panicRed(err)
 			}
