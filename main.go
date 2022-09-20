@@ -1,6 +1,8 @@
 package main
 
-import "govpn/cmd"
+import (
+	"github.com/ghdwlsgur/govpn/cmd"
+)
 
 func main() {
 	cmd.Execute("1.0")
