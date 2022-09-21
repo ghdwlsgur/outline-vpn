@@ -126,24 +126,24 @@ func CreateWorkspace(ctx context.Context, execPath, _defaultTerraformPath, regio
 
 func CreateTf(workSpacePath string, region, ami, instanceType, az string) error {
 
-	mainErr := CreateMainDotTf(workSpacePath, region, ami, instanceType, az)
-	if mainErr != nil {
-		return mainErr
+	err := CreateMainDotTf(workSpacePath, region, ami, instanceType, az)
+	if err != nil {
+		return err
 	}
 
-	providerErr := CreateProviderDotTf(workSpacePath, region)
-	if providerErr != nil {
-		return providerErr
+	err = CreateProviderDotTf(workSpacePath, region)
+	if err != nil {
+		return err
 	}
 
-	outputErr := CreateOutputDotTf(workSpacePath)
-	if outputErr != nil {
-		return outputErr
+	err = CreateOutputDotTf(workSpacePath)
+	if err != nil {
+		return err
 	}
 
-	keyErr := CreateKeyDotTf(workSpacePath)
-	if keyErr != nil {
-		return keyErr
+	err = CreateKeyDotTf(workSpacePath)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -261,5 +261,4 @@ func CreateKeyDotTf(workSpacePath string) error {
 		return err
 	}
 	return nil
-
 }
