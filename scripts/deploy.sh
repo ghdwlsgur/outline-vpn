@@ -34,9 +34,6 @@ function release
      exit 1
   fi
  
-  git config --global user.name "HongJinHyeok"
-  git config --global user.email vjinhyeokv@gmail.com
-
   git tag -a $tag -m "Add $tag"
   git push origin $tag
 
