@@ -1,14 +1,15 @@
-#!/usr/bin/env bash 
-
 # Copyright © 2020 gjbae1212
 # Released under the MIT license.
 # (https://github.com/gjbae1212/gossm)
 
-
+#!/usr/bin/env bash 
 set -e -o pipefail
+
+
+
 trap '[ "$?" -eq 0 ] || echo "Error Line:<$LINENO> Error Function:<${FUNCNAME}>"' EXIT
-cd `dirname $0` && cd ..
-CURRENT=`pwd`
+cd $(dirname $0) && cd ..
+CURRENT=$(pwd)
 
 function test
 {
@@ -23,15 +24,13 @@ function test_with_circleci
 
 function release
 {  
-  sudo rm -rf $CURRENT/dist
-  sudo rm -rf $CURRENT/gopath
+  sudo rm -rf $CURRENT/dist $CURRENT/gopath  
   export GOPATH=$CURRENT/gopath
 
   tag=$1
-  if [ -z "$tag" ]
-  then
-     echo "not found tag name"
-     exit 1
+  if [ -z "$tag" ]; then
+    echo "not found tag name"
+    exit 1
   fi
  
   git tag -a $tag -m "Add $tag"
@@ -42,9 +41,9 @@ function release
 
 function release_test
 {
-  sudo rm -rf $CURRENT/dist
-  sudo rm -rf $CURRENT/gopath
+  sudo rm -rf $CURRENT/dist $CURRENT/gopath  
   export GOPATH=$CURRENT/gopath
+
   goreleaser release --snapshot --rm-dist
 }
 
