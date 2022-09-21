@@ -70,7 +70,6 @@ func panicRed(err error) {
 }
 
 func gitInit() {
-
 	// git clone https://github.com/ghdwlsgur/govpn-terraform
 	if _, err := os.Stat(_defaultTerraformPath); errors.Is(err, os.ErrNotExist) {
 		// govpn-terraform folder does not exist
@@ -103,7 +102,7 @@ func gitInit() {
 	}
 }
 
-func askProfile() {
+func findProfile() {
 	awsProfile := viper.GetString("profile")
 
 	if awsProfile == "" {
@@ -116,9 +115,8 @@ func askProfile() {
 	_credential.awsProfile = awsProfile
 }
 
-func askSharedCredFile() {
+func findSharedCredFile() {
 	sharedCredFile := os.Getenv("AWS_SHARED_CREDENTIALS_FILE")
-
 	if sharedCredFile == "" {
 		if _, err := os.Stat(_credentialWithMFA); !os.IsNotExist(err) {
 			color.Yellow("[Use] gossm default mfa credential file %s", _credentialWithMFA)
@@ -148,7 +146,7 @@ func askSharedCredFile() {
 	}
 }
 
-func askRegion(awsRegion string) {
+func findRegion(awsRegion string) {
 	if awsRegion != "" {
 		_credential.awsConfig.Region = awsRegion
 	}
@@ -163,22 +161,100 @@ func askRegion(awsRegion string) {
 	color.Green("region \t\t\t(%s)\n\n", _credential.awsConfig.Region)
 }
 
+func setTempConfig(awsRegion string, subcmd *cobra.Command) (string, aws.Config) {
+	var temporaryCredentials aws.Credentials
+	var temporaryConfig aws.Config
+
+	var temporaryCredentialsError = func(temporaryCredentials aws.Credentials, err error, subcmd *cobra.Command) bool {
+		return (err != nil ||
+			temporaryCredentials.Expired() ||
+			temporaryCredentials.AccessKeyID == "" ||
+			temporaryCredentials.SecretAccessKey == "" ||
+			(subcmd.Use == "mfa" && temporaryCredentials.SessionToken != ""))
+	}
+
+	var temporaryCredentialsInvalid = func(temporaryCredentials aws.Credentials) bool {
+		return temporaryCredentials.Expired() || temporaryCredentials.AccessKeyID == "" || temporaryCredentials.SecretAccessKey == ""
+	}
+
+	if os.Getenv("AWS_ACCESS_KEY_ID") != "" && os.Getenv("AWS_SECRET_ACCESS_KEY") != "" {
+		temporaryConfig, err = internal.NewConfig(context.Background(),
+			os.Getenv("AWS_ACCESS_KEY_ID"),
+			os.Getenv("AWS_SECRET_ACCESS_KEY"),
+			os.Getenv("AWS_SESSION_TOKEN"),
+			awsRegion,
+			os.Getenv("AWS_ROLE_ARN"))
+		if err != nil {
+			panicRed(internal.WrapError(err))
+		}
+
+		temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
+		if temporaryCredentialsError(temporaryCredentials, err, subcmd) {
+			panicRed(internal.WrapError(fmt.Errorf("[err] invalid global environments %s", err.Error())))
+		}
+	} else {
+		temporaryConfig, err = internal.NewSharedConfig(context.Background(),
+			_credential.awsProfile,
+			[]string{config.DefaultSharedConfigFilename()},
+			[]string{})
+		if err == nil {
+			temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
+		}
+
+		if temporaryCredentialsError(temporaryCredentials, err, subcmd) {
+			temporaryConfig, err = internal.NewSharedConfig(context.Background(),
+				_credential.awsProfile,
+				[]string{config.DefaultSharedConfigFilename()},
+				[]string{config.DefaultSharedCredentialsFilename()})
+			if err != nil {
+				panicRed(internal.WrapError(err))
+			}
+
+			temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
+			if err != nil {
+				panicRed(internal.WrapError(err))
+			}
+			if temporaryCredentialsInvalid(temporaryCredentials) {
+				panicRed(internal.WrapError(fmt.Errorf("[err] not found credentials")))
+			}
+		}
+	}
+
+	return fmt.Sprintf(mfaCredentialFormat,
+		_credential.awsProfile,
+		temporaryCredentials.AccessKeyID,
+		temporaryCredentials.SecretAccessKey,
+		temporaryCredentials.SessionToken,
+	), temporaryConfig
+}
+
+func createTemporaryCredentialsFile(temporaryCredentialsString, awsRegion string, temporaryConfig aws.Config) string {
+	if err := os.WriteFile(_credentialWithTemporary, []byte(temporaryCredentialsString), 0600); err != nil {
+		panicRed(internal.WrapError(err))
+	}
+
+	os.Setenv("AWS_SHARED_CREDENTIALS_FILE", _credentialWithTemporary)
+	awsConfig, err := internal.NewSharedConfig(context.Background(),
+		_credential.awsProfile,
+		[]string{},
+		[]string{_credentialWithTemporary})
+	if err != nil {
+		panicRed(internal.WrapError(err))
+	}
+	_credential.awsConfig = &awsConfig
+
+	if awsRegion == "" {
+		return temporaryConfig.Region
+	}
+	return awsRegion
+}
+
 func initConfig() {
 
-	gitInit()
-
-	/*=======================================================
-
-		Copyright © 2020 gjbae1212
-		Released under the MIT license.
-		(https://github.com/gjbae1212/gossm)
-
-	=======================================================*/
 	_credential = &Credential{}
-
-	askProfile()
-
-	askSharedCredFile()
+	gitInit()
+	findProfile()
+	findSharedCredFile()
 
 	args := os.Args[1:]
 	subcmd, _, err := rootCmd.Find(args)
@@ -203,72 +279,10 @@ func initConfig() {
 
 	awsRegion := viper.GetString("region")
 	if _credential.awsConfig == nil {
-		var temporaryCredentials aws.Credentials
-		var temporaryConfig aws.Config
-
-		if os.Getenv("AWS_ACCESS_KEY_ID") != "" && os.Getenv("AWS_SECRET_ACCESS_KEY") != "" {
-			temporaryConfig, err = internal.NewConfig(context.Background(),
-				os.Getenv("AWS_ACCESS_KEY_ID"), os.Getenv("AWS_SECRET_ACCESS_KEY"),
-				os.Getenv("AWS_SESSION_TOKEN"), awsRegion, os.Getenv("AWS_ROLE_ARN"))
-			if err != nil {
-				panicRed(internal.WrapError(err))
-			}
-
-			temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
-			if err != nil || temporaryCredentials.Expired() ||
-				temporaryCredentials.AccessKeyID == "" || temporaryCredentials.SecretAccessKey == "" ||
-				(subcmd.Use == "mfa" && temporaryCredentials.SessionToken != "") {
-				panicRed(internal.WrapError(fmt.Errorf("[err] invalid global environments %s", err.Error())))
-			}
-		} else {
-			temporaryConfig, err = internal.NewSharedConfig(context.Background(), _credential.awsProfile,
-				[]string{config.DefaultSharedConfigFilename()}, []string{})
-			if err == nil {
-				temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
-			}
-
-			if err != nil || temporaryCredentials.Expired() ||
-				temporaryCredentials.AccessKeyID == "" || temporaryCredentials.SecretAccessKey == "" ||
-				(subcmd.Use == "mfa" && temporaryCredentials.SessionToken != "") {
-
-				temporaryConfig, err = internal.NewSharedConfig(context.Background(), _credential.awsProfile,
-					[]string{config.DefaultSharedConfigFilename()}, []string{config.DefaultSharedCredentialsFilename()})
-
-				if err != nil {
-					panicRed(internal.WrapError(err))
-				}
-
-				temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
-				if err != nil {
-					panicRed(internal.WrapError(err))
-				}
-				if temporaryCredentials.Expired() || temporaryCredentials.AccessKeyID == "" || temporaryCredentials.SecretAccessKey == "" {
-					panicRed(internal.WrapError(fmt.Errorf("[err] not found credentials")))
-				}
-
-				if awsRegion == "" {
-					awsRegion = temporaryConfig.Region
-				}
-			}
-		}
-
-		temporaryCredentialsString := fmt.Sprintf(mfaCredentialFormat, _credential.awsProfile, temporaryCredentials.AccessKeyID,
-			temporaryCredentials.SecretAccessKey, temporaryCredentials.SessionToken)
-		if err := os.WriteFile(_credentialWithTemporary, []byte(temporaryCredentialsString), 0600); err != nil {
-			panicRed(internal.WrapError(err))
-		}
-
-		os.Setenv("AWS_SHARED_CREDENTIALS_FILE", _credentialWithTemporary)
-		awsConfig, err := internal.NewSharedConfig(context.Background(),
-			_credential.awsProfile, []string{}, []string{_credentialWithTemporary},
-		)
-		if err != nil {
-			panicRed(internal.WrapError(err))
-		}
-		_credential.awsConfig = &awsConfig
+		temporaryCredentialsString, temporaryConfig := setTempConfig(awsRegion, subcmd)
+		awsRegion = createTemporaryCredentialsFile(temporaryCredentialsString, awsRegion, temporaryConfig)
 	}
-
-	askRegion(awsRegion)
+	findRegion(awsRegion)
 }
 
 func init() {
