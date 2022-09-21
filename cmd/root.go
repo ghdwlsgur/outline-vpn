@@ -21,8 +21,18 @@ const (
 )
 
 var (
-	_defaultTerraformPath string
-	_defaultTerraformVars string
+	path = func() string {
+		path, _ := os.Getwd()
+		return path
+	}()
+
+	_defaultTerraformPath = func(path, terraformPath string) string {
+		return path + terraformPath
+	}(path, "/govpn-terraform")
+
+	_defaultTerraformVars = func(path, tfvarsJsonPath string) string {
+		return path + tfvarsJsonPath
+	}(path, "/govpn-terraform/terraform.tfvars.json")
 
 	rootCmd = &cobra.Command{
 		Use:   "govpn",
@@ -59,14 +69,11 @@ func panicRed(err error) {
 	os.Exit(1)
 }
 
-func initConfig() {
-	path, _ := os.Getwd()
-	_defaultTerraformPath = path + "/govpn-terraform"
-	_defaultTerraformVars = path + "/govpn-terraform/terraform.tfvars.json"
+func gitInit() {
 
 	// git clone https://github.com/ghdwlsgur/govpn-terraform
 	if _, err := os.Stat(_defaultTerraformPath); errors.Is(err, os.ErrNotExist) {
-		// repo-folder (govpn-terraform) does not exist
+		// govpn-terraform folder does not exist
 		_, err := git.PlainClone(_defaultTerraformPath, false, &git.CloneOptions{
 			URL:      _defaultGitUrl,
 			Progress: os.Stdout,
@@ -74,13 +81,15 @@ func initConfig() {
 		if err != nil {
 			panicRed(err)
 		}
+
 		fmt.Println(color.GreenString("🎉 Terrafom File Download Complete! 🎉"))
 	} else {
-		// repo-folder (govpn-terraform) exists
+		// govpn-terraform folder exists
 		repository, err := git.PlainOpen(_defaultTerraformPath)
 		if err != nil {
 			panicRed(err)
 		}
+
 		worktree, err := repository.Worktree()
 		if err != nil {
 			panicRed(err)
@@ -92,17 +101,11 @@ func initConfig() {
 			fmt.Println(color.GreenString("govpn-terraform (%s)", "pull complete"))
 		}
 	}
+}
 
-	/*=======================================================
-
-		Copyright © 2020 gjbae1212
-		Released under the MIT license.
-		(https://github.com/gjbae1212/gossm)
-
-	=======================================================*/
-	_credential = &Credential{}
-
+func askProfile() {
 	awsProfile := viper.GetString("profile")
+
 	if awsProfile == "" {
 		if os.Getenv("AWS_PROFILE") != "" {
 			awsProfile = os.Getenv("AWS_PROFILE")
@@ -111,10 +114,11 @@ func initConfig() {
 		}
 	}
 	_credential.awsProfile = awsProfile
+}
 
-	awsRegion := viper.GetString("region")
-
+func askSharedCredFile() {
 	sharedCredFile := os.Getenv("AWS_SHARED_CREDENTIALS_FILE")
+
 	if sharedCredFile == "" {
 		if _, err := os.Stat(_credentialWithMFA); !os.IsNotExist(err) {
 			color.Yellow("[Use] gossm default mfa credential file %s", _credentialWithMFA)
@@ -142,6 +146,39 @@ func initConfig() {
 			_credential.awsConfig = &awsConfig
 		}
 	}
+}
+
+func askRegion(awsRegion string) {
+	if awsRegion != "" {
+		_credential.awsConfig.Region = awsRegion
+	}
+
+	if _credential.awsConfig.Region == "" {
+		region, err := internal.AskRegion(context.Background(), *_credential.awsConfig)
+		if err != nil {
+			panicRed(internal.WrapError(err))
+		}
+		_credential.awsConfig.Region = region.Name
+	}
+	color.Green("region \t\t\t(%s)\n\n", _credential.awsConfig.Region)
+}
+
+func initConfig() {
+
+	gitInit()
+
+	/*=======================================================
+
+		Copyright © 2020 gjbae1212
+		Released under the MIT license.
+		(https://github.com/gjbae1212/gossm)
+
+	=======================================================*/
+	_credential = &Credential{}
+
+	askProfile()
+
+	askSharedCredFile()
 
 	args := os.Args[1:]
 	subcmd, _, err := rootCmd.Find(args)
@@ -164,6 +201,7 @@ func initConfig() {
 		}
 	}
 
+	awsRegion := viper.GetString("region")
 	if _credential.awsConfig == nil {
 		var temporaryCredentials aws.Credentials
 		var temporaryConfig aws.Config
@@ -230,18 +268,7 @@ func initConfig() {
 		_credential.awsConfig = &awsConfig
 	}
 
-	if awsRegion != "" {
-		_credential.awsConfig.Region = awsRegion
-	}
-	if _credential.awsConfig.Region == "" {
-		askRegion, err := internal.AskRegion(context.Background(), *_credential.awsConfig)
-		if err != nil {
-			panicRed(internal.WrapError(err))
-		}
-		_credential.awsConfig.Region = askRegion.Name
-	}
-	color.Green("region \t\t\t(%s)\n\n", _credential.awsConfig.Region)
-
+	askRegion(awsRegion)
 }
 
 func init() {
