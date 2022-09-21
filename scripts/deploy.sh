@@ -8,7 +8,7 @@ set -e -o pipefail
 
 
 trap '[ "$?" -eq 0 ] || echo "Error Line:<$LINENO> Error Function:<${FUNCNAME}>"' EXIT
-cd $(dirname $0) && cd ..
+cd "$(dirname "$0")" && cd ..
 CURRENT=$(pwd)
 
 function test
