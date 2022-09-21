@@ -22,20 +22,20 @@
 
 # Overview
 
-After the user selects an `machine image`, `instance type`, `region`, and `availability zone`, an EC2 is created in the default subnet within the selected availability zone in the default vpc. If you don't have a default vpc or default subnet, we'll help you defulat vpc or default subnet. You can create one EC2 instance for each region. You can use the VPN service by downloading and pasting the [Outline Client](https://getoutline.org/ko/get-started/#step-3) App.
+After the user selects an `machine image`, `instance type`, `region`, and `availability zone`, an EC2 is created in the default subnet within the selected availability zone in the default vpc. If you don't have a default vpc or default subnet, we'll help you create defulat vpc or default subnet. You can create one EC2 instance for each region. You can use the vpn service by pasting access key on the [Outline Client](https://getoutline.org/ko/get-started/#step-3) App.
 
 # Prerequisite
 
 ### EC2
 
-- ⚠️ [required] ec2:CreateDefaultVpc, ec2:DescribeVpcs, ec2:DeleteVpc
-- ⚠️ [required] ec2:CreateDefaultSubnet, ec2:DescribeSubnets, ec2:DeleteSubnet
-- ⚠️ [required] ec2:DeleteInternetGateway, ec2:DescribeInternetGateways, ec2:DetachInternetGateway
-- ⚠️ [required] ec2:CreateTags, ec2:DescribeInstances, ec2:DescribeInstanceTypeOfferings, ec2:DescribeAvailabilityZones, ec2:DescribeImages, ec2:DescribeRegions
+- [ ! required] ec2:CreateDefaultVpc, ec2:DescribeVpcs, ec2:DeleteVpc
+- [ ! required] ec2:CreateDefaultSubnet, ec2:DescribeSubnets, ec2:DeleteSubnet
+- [ ! required] ec2:DeleteInternetGateway, ec2:DescribeInternetGateways, ec2:DetachInternetGateway
+- [ ! required] ec2:CreateTags, ec2:DescribeInstances, ec2:DescribeInstanceTypeOfferings, ec2:DescribeAvailabilityZones, ec2:DescribeImages, ec2:DescribeRegions
 
 ### Client
 
-- ⚠️ [required] AWS Configure
+- [ ! required] AWS Configure
 
   > Execute command that `aws configure`
 
@@ -74,11 +74,9 @@ brew upgrade govpn
 $ govpn apply
 
 # Provision EC2 in the us-east-1 region.
-
 $ govpn apply -r us-east-1
 
 # Provision EC2 in the ap-northeast-2 region.
-
 $ govpn destroy -r ap-northeast-2
 ```
 
@@ -90,11 +88,9 @@ $ govpn destroy -r ap-northeast-2
 $ govpn destroy
 
 # Terminate EC2 in the us-east-1 region.
-
 $ govpn destroy -r us-east-1
 
 # Terminate EC2 in the ap-northeast-2 region.
-
 $ govpn destroy -r ap-northeast-2
 ```
 
