@@ -57,7 +57,7 @@ var (
 					panicRed(fmt.Errorf(`⚠️  Please Disconnect Outline VPN and Try Again`))
 				}
 
-				answer, err := internal.AskTerraformDestroy()
+				answer, err := internal.AskTerraformExecution("Do You Execute Terraform Destroy:")
 				if err != nil {
 					panicRed(err)
 				}

@@ -198,7 +198,7 @@ var (
 
 			internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform plan", "success")
 
-			answer, err := internal.AskTerraformApply()
+			answer, err := internal.AskTerraformExecution("Do You Provision EC2 Instance:")
 			if err != nil {
 				panicRed(err)
 			}

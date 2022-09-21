@@ -25,44 +25,7 @@ type (
 	}
 )
 
-func AskTerraformDestroy() (string, error) {
-	prompt := &survey.Select{
-		Message: "Do You Execute Terraform Destroy:",
-		Options: []string{"Yes", "No (exit)"},
-	}
-
-	answer := ""
-	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.SelectFocus.Format = "green+hb"
-	}), survey.WithPageSize(2)); err != nil {
-		return "No", err
-	}
-	return answer, nil
-}
-
-func TerraformReady(ctx context.Context, ver string) (string, error) {
-	installer := &releases.ExactVersion{
-		Product: product.Terraform,
-		Version: version.Must(version.NewVersion(ver)),
-	}
-
-	execPath, err := installer.Install(ctx)
-	if err != nil {
-		return "", err
-	}
-	return execPath, nil
-}
-
-func SetRoot(execPath, terraformPath string) (*tfexec.Terraform, error) {
-	tf, err := tfexec.NewTerraform(terraformPath, execPath)
-	if err != nil {
-		return nil, err
-	}
-
-	return tf, nil
-}
-
-func AskTerraformApply() (string, error) {
+func AskTerraformExecution(Message string) (string, error) {
 	prompt := &survey.Select{
 		Message: "Do You Provision EC2 Instance:",
 		Options: []string{"Yes", "No (exit)"},
@@ -76,6 +39,29 @@ func AskTerraformApply() (string, error) {
 	}
 
 	return answer, nil
+}
+
+func TerraformReady(ctx context.Context, ver string) (string, error) {
+	installer := &releases.ExactVersion{
+		Product: product.Terraform,
+		Version: version.Must(version.NewVersion(ver)),
+	}
+
+	execPath, err := installer.Install(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return execPath, nil
+}
+
+func SetRoot(execPath, terraformPath string) (*tfexec.Terraform, error) {
+	tf, err := tfexec.NewTerraform(terraformPath, execPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return tf, nil
 }
 
 func ExistsWorkspace(ctx context.Context, execPath, _defaultTerraformPath, regionName string) (*Workspace, error) {
@@ -117,11 +103,7 @@ func SelectWorkspace(ctx context.Context, execPath, _defaultTerraformPath, regio
 func CreateWorkspace(ctx context.Context, execPath, _defaultTerraformPath, regionName string) error {
 
 	tf, _ := SetRoot(execPath, _defaultTerraformPath)
-	err := tf.WorkspaceNew(ctx, regionName)
-	if err != nil {
-		return err
-	}
-	return nil
+	return tf.WorkspaceNew(ctx, regionName)
 }
 
 func CreateTf(workSpacePath string, region, ami, instanceType, az string) error {
@@ -179,10 +161,7 @@ func CreateMainDotTf(workSpacePath string, region, ami, instanceType, az string)
 		hcl.TraverseAttr{Name: "private_key_pem"},
 	})
 
-	if err := os.WriteFile(fileName, f.Bytes(), 0644); err != nil {
-		return err
-	}
-	return nil
+	return os.WriteFile(fileName, f.Bytes(), 0644)
 }
 
 func CreateProviderDotTf(workSpacePath string, region string) error {
@@ -195,10 +174,7 @@ func CreateProviderDotTf(workSpacePath string, region string) error {
 	providerBody := providerBlock.Body()
 	providerBody.SetAttributeValue("region", cty.StringVal(region))
 
-	if err := os.WriteFile(fileName, f.Bytes(), 0644); err != nil {
-		return err
-	}
-	return nil
+	return os.WriteFile(fileName, f.Bytes(), 0644)
 }
 
 func CreateOutputDotTf(workSpacePath string) error {
@@ -226,11 +202,7 @@ func CreateOutputDotTf(workSpacePath string) error {
 		hcl.TraverseAttr{Name: "OutlineClientAccessKey"},
 	})
 
-	if err := os.WriteFile(fileName, f.Bytes(), 0644); err != nil {
-		return err
-	}
-
-	return nil
+	return os.WriteFile(fileName, f.Bytes(), 0644)
 }
 
 func CreateKeyDotTf(workSpacePath string) error {
@@ -257,8 +229,5 @@ func CreateKeyDotTf(workSpacePath string) error {
 		hcl.TraverseAttr{Name: "public_key_openssh"},
 	})
 
-	if err := os.WriteFile(fileName, f.Bytes(), 0644); err != nil {
-		return err
-	}
-	return nil
+	return os.WriteFile(fileName, f.Bytes(), 0644)
 }
