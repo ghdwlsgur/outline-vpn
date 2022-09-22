@@ -196,13 +196,10 @@ func DeleteIgws(ctx context.Context, cfg aws.Config, vpcId string) (bool, error)
 	return true, nil
 }
 
-func AskCreateDefaultVpc() (string, error) {
-	notice := color.New(color.Bold, color.FgHiRed).PrintFunc()
-	notice("⚠️   Sorry, you cannot proceed without a default VPC.\n")
-
+func AskPrompt(Message, AnswerOne, AnswerTwo string) (string, error) {
 	prompt := &survey.Select{
-		Message: "Do You Create Default VPC (tag: govpn-vpc):",
-		Options: []string{"Yes", "No (exit)"},
+		Message: Message,
+		Options: []string{AnswerOne, AnswerTwo},
 	}
 
 	answer := ""
@@ -215,18 +212,13 @@ func AskCreateDefaultVpc() (string, error) {
 	return answer, nil
 }
 
+func AskCreateDefaultVpc() (string, error) {
+	notice := color.New(color.Bold, color.FgHiRed).PrintFunc()
+	notice("⚠️   Sorry, you cannot proceed without a default VPC.\n")
+
+	return AskPrompt("Do You Create Default VPC (tag: govpn-vpc):", "Yes", "No (exit)")
+}
+
 func AskDeleteTagVpc() (string, error) {
-	prompt := &survey.Select{
-		Message: "Do You Delete Default VPC (tag: govpn-vpc):",
-		Options: []string{"Yes", "No"},
-	}
-
-	answer := ""
-	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.SelectFocus.Format = "green+hb"
-	}), survey.WithPageSize(2)); err != nil {
-		return "No", err
-	}
-
-	return answer, nil
+	return AskPrompt("Do You Delete Default VPC (tag: govpn-vpc):", "Yes", "No")
 }
