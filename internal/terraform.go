@@ -27,7 +27,7 @@ type (
 
 func AskTerraformExecution(Message string) (string, error) {
 	prompt := &survey.Select{
-		Message: "Do You Provision EC2 Instance:",
+		Message: Message,
 		Options: []string{"Yes", "No (exit)"},
 	}
 
