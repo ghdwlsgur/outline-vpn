@@ -97,7 +97,7 @@ func gitInit() {
 		if err != nil {
 			fmt.Println(color.GreenString("govpn-terraform \t(%s)", err.Error()))
 		} else {
-			fmt.Println(color.GreenString("govpn-terraform (%s)", "pull complete"))
+			fmt.Println(color.GreenString("govpn-terraform \t(%s)", "pull complete"))
 		}
 	}
 }
