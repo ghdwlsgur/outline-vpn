@@ -85,3 +85,20 @@ func CreateTags(ctx context.Context, cfg aws.Config, id *string, tagName string)
 func PrintReady(cmd, region, title, content string) {
 	fmt.Printf("%s region: %s, %s: %s\n", color.GreenString(cmd), color.HiYellowString(region), title, color.HiGreenString(content))
 }
+
+func AskPrompt(Message, AnswerOne, AnswerTwo string) (string, error) {
+
+	prompt := &survey.Select{
+		Message: Message,
+		Options: []string{AnswerOne, AnswerTwo},
+	}
+
+	answer := ""
+	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
+		icons.SelectFocus.Format = "green+hb"
+	}), survey.WithPageSize(2)); err != nil {
+		return "No", err
+	}
+
+	return answer, nil
+}
