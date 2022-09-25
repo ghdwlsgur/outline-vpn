@@ -28,8 +28,8 @@ const (
 var (
 	mfaCommand = &cobra.Command{
 		Use:   "mfa",
-		Short: "mfa test",
-		Long:  `mfa test`,
+		Short: "It's to authenticate MFA on AWS, and save authenticated mfa token in .aws/credentials_mfa.",
+		Long:  `It's to authenticate MFA on AWS, and save authenticated mfa token in .aws/credentials_mfa.`,
 		Run: func(_ *cobra.Command, args []string) {
 			ctx := context.Background()
 			ctx, cancel := context.WithTimeout(ctx, time.Second*60)

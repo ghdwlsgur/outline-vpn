@@ -14,8 +14,8 @@ import (
 var (
 	destroyCommand = &cobra.Command{
 		Use:   "destroy",
-		Short: "Exec `destroy` under Terraform Destroy with interactive CLI",
-		Long:  "Exec `destroy` under Terraform Destroy with interactive CLI",
+		Short: "Delete the EC2 instance you created as the outline VPN server and all resources associated with it.",
+		Long:  "Delete the EC2 instance you created as the outline VPN server and all resources associated with it.",
 		Run: func(_ *cobra.Command, _ []string) {
 			var (
 				instance *internal.EC2
@@ -39,7 +39,7 @@ var (
 				}
 
 				if answer == "Yes" {
-					internal.DeleteTagSubnet(ctx, *_credential.awsConfig, tagSubnet.Id)
+					internal.DeleteTagSubnet(ctx, *_credential.awsConfig, tagSubnet.ID)
 				}
 			}
 

@@ -37,8 +37,8 @@ var (
 var (
 	applyCommand = &cobra.Command{
 		Use:   "apply",
-		Short: "Exec `apply` under Terraform Apply with interactive CLI",
-		Long:  "Exec `apply` under Terraform Apply with interactive CLI",
+		Short: "Create an instance that can be used as an outline VPN server and all its resources.",
+		Long:  "Create an instance that can be used as an outline VPN server and all its resources.",
 		Run: func(_ *cobra.Command, _ []string) {
 			ctx := context.Background()
 

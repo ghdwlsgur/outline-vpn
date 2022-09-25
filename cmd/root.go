@@ -36,8 +36,8 @@ var (
 
 	rootCmd = &cobra.Command{
 		Use:   "govpn",
-		Short: `govpn is interactive CLI tool`,
-		Long:  `govpn is interactive CLI tool`,
+		Short: `govpn is interactive CLI tool to quickly provision a cloud server to use Outline VPN`,
+		Long:  `After the user selects an machine image, instance type, region, and availability zone, an EC2 is created in the default subnet within the selected availability zone in the default vpc. If you don't have a default vpc or default subnet, we'll help you create defulat vpc or default subnet. You can create one EC2 instance for each region. You can use the vpn service by pasting access key on the Outline Client App.`,
 	}
 
 	_credential              *Credential
