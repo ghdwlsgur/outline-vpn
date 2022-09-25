@@ -113,7 +113,7 @@ $ govpn destroy -r ap-northeast-2
 ```
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/77400522/191327884-2f418d58-2da9-4252-ac20-edecd91eb7d2.mov" width="680", height="550" />
+<img src="https://user-images.githubusercontent.com/77400522/192142122-df7692a3-75ee-44f1-aee1-ea48e69eb4d9.mov" width="680", height="550" />
 </p>
 
 # License
