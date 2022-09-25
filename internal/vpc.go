@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2_types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
@@ -194,22 +193,6 @@ func DeleteIgws(ctx context.Context, cfg aws.Config, vpcId string) (bool, error)
 	}
 
 	return true, nil
-}
-
-func AskPrompt(Message, AnswerOne, AnswerTwo string) (string, error) {
-	prompt := &survey.Select{
-		Message: Message,
-		Options: []string{AnswerOne, AnswerTwo},
-	}
-
-	answer := ""
-	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.SelectFocus.Format = "green+hb"
-	}), survey.WithPageSize(2)); err != nil {
-		return "No", err
-	}
-
-	return answer, nil
 }
 
 func AskCreateDefaultVpc() (string, error) {
