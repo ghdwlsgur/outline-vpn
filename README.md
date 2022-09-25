@@ -30,6 +30,8 @@ The VPN service can only be accessed from the public IP of the computer where yo
 
 # Prerequisite
 
+Provisioning speed may vary depending on instance type.
+
 ### EC2
 
 - [required] ec2:CreateDefaultVpc, ec2:DescribeVpcs, ec2:DeleteVpc
@@ -52,6 +54,18 @@ The VPN service can only be accessed from the public IP of the computer where yo
   ```
 
 - [optional] `~/.aws/credentials` or `~/.aws/credentials_temporary`
+
+# Result
+
+> example region: us-east-1
+
+- [optional tag: `govpn-vpc`] default vpc
+- [optional tag: `govpn-subnet`] default subnet
+- [required tag: `govpn-ec2-us-east-1`] EC2
+- [required tag: `govpn_us-east-1`] Key Pair and Pem file (.ssh/govpn_us-east-1.pem)
+- [required tag: `govpn-sg-us-east-1`] Security Group
+
+### All the resources you create can be tracked with the tag function provided by AWS. This thoroughly avoids unexpected cost of resources.
 
 # Installation
 
