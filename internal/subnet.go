@@ -20,7 +20,7 @@ type (
 	DefaultSubnet struct {
 		New       bool   // Indicates whether to create a new subnet.
 		Existence bool   // Indicates whether a default subnet exists.
-		Id        string // Save the id value of the default subnet.
+		ID        string // Save the id value of the default subnet.
 	}
 )
 
@@ -50,7 +50,7 @@ func CreateDefaultSubnet(ctx context.Context, cfg aws.Config, az string) (*Defau
 	}
 
 	// We created a new subnet, so New: returns true.
-	return &DefaultSubnet{New: true, Id: aws.ToString(output.Subnet.SubnetId)}, nil
+	return &DefaultSubnet{New: true, ID: aws.ToString(output.Subnet.SubnetId)}, nil
 }
 
 // Make sure the default subnet exists.
@@ -110,7 +110,7 @@ func ExistsTagSubnet(ctx context.Context, cfg aws.Config) (*DefaultSubnet, error
 
 	// Since the tagged subnet exists, the subnet's ID and Existence: returns true.
 	if len(output.Subnets) > 0 {
-		return &DefaultSubnet{Id: aws.ToString(output.Subnets[0].SubnetId), Existence: true}, nil
+		return &DefaultSubnet{ID: aws.ToString(output.Subnets[0].SubnetId), Existence: true}, nil
 	}
 
 	// Because the tagged subnet does not exist, it returns Existence: false.

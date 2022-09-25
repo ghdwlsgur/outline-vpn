@@ -52,7 +52,7 @@ func TestCreateDefaultSubnet(t *testing.T) {
 			assert.Equal(t.isErr, err != nil)
 			assert.Equal(true, exitsSubnet.Existence)
 
-			deleteSubnet, err := DeleteTagSubnet(t.ctx, t.cfg, createSubnet.Id)
+			deleteSubnet, err := DeleteTagSubnet(t.ctx, t.cfg, createSubnet.ID)
 			assert.Equal(t.isErr, err != nil)
 			assert.Equal(t.isDelete, deleteSubnet)
 		}
@@ -70,7 +70,7 @@ func TestCreateDefaultSubnet(t *testing.T) {
 			assert.Equal(t.isErr, err != nil)
 			assert.Equal(true, existsSubnet.Existence)
 
-			deleteSubnet, err := DeleteTagSubnet(t.ctx, t.cfg, createSubnet.Id)
+			deleteSubnet, err := DeleteTagSubnet(t.ctx, t.cfg, createSubnet.ID)
 			assert.Equal(t.isErr, err != nil)
 			assert.Equal(t.isDelete, deleteSubnet)
 		}
