@@ -1,5 +1,5 @@
 govpn-terraform
-dist/
+dist
 vendor
 gopath 
 coverage.txt
