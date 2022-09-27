@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/ghdwlsgur/govpn/internal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	git "gopkg.in/src-d/go-git.v4"
 )
 
 const (
@@ -65,6 +67,39 @@ func Execute(version string) {
 func panicRed(err error) {
 	fmt.Println(color.RedString("[err] %s", err.Error()))
 	os.Exit(1)
+}
+
+func gitInit() {
+	// git clone https://github.com/ghdwlsgur/govpn-terraform
+	if _, err := os.Stat(_defaultTerraformPath); errors.Is(err, os.ErrNotExist) {
+		// govpn-terraform folder does not exist
+		_, err := git.PlainClone(_defaultTerraformPath, false, &git.CloneOptions{
+			URL:      _defaultGitUrl,
+			Progress: os.Stdout,
+		})
+		if err != nil {
+			panicRed(err)
+		}
+
+		fmt.Println(color.GreenString("🎉 Terrafom File Download Complete! 🎉"))
+	} else {
+		// govpn-terraform folder exists
+		repository, err := git.PlainOpen(_defaultTerraformPath)
+		if err != nil {
+			panicRed(err)
+		}
+
+		worktree, err := repository.Worktree()
+		if err != nil {
+			panicRed(err)
+		}
+		err = worktree.Pull(&git.PullOptions{RemoteName: "origin"})
+		if err != nil {
+			fmt.Println(color.GreenString("govpn-terraform \t(%s)", err.Error()))
+		} else {
+			fmt.Println(color.GreenString("govpn-terraform \t(%s)", "pull complete"))
+		}
+	}
 }
 
 func findProfile() {
@@ -217,6 +252,7 @@ func createTemporaryCredentialsFile(temporaryCredentialsString, awsRegion string
 func initConfig() {
 
 	_credential = &Credential{}
+	gitInit()
 	findProfile()
 	findSharedCredFile()
 
