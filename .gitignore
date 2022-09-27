@@ -1,14 +1,6 @@
+govpn-terraform
 dist
 vendor
 gopath 
 coverage.txt
 
-# terraform 
-govpn-terraform/terraform.tfstate
-govpn-terraform/terraform.tfstate.backup
-govpn-terraform/.terraform
-govpn-terraform/.terraform.** 
-
-# terraform workspace
-govpn-terraform/terraform.tfstate.d
-govpn-terraform/terraform.tfstate.d/**
