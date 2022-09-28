@@ -29,8 +29,7 @@ func CreateDefaultVpc(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) 
 	/* AWS CLI Command Reference (https://docs.aws.amazon.com/cli/latest/reference/ec2/create-default-vpc.html)
 	* Example========================================================
 	aws ec2 create-default-vpc --region us-east-1
-	=================================================================
-	*/
+	=================================================================*/
 	output, err := client.CreateDefaultVpc(ctx, &ec2.CreateDefaultVpcInput{})
 	if err != nil {
 		return &DefaultVpc{}, err
@@ -53,8 +52,7 @@ func ExistsDefaultVpc(ctx context.Context, cfg aws.Config) (*DefaultVpc, error) 
 	aws ec2 describe-vpcs \
 		--filters Name=is-default,Values=true Name=state,Values=available \
 		--region us-east-1
-	=================================================================
-	*/
+	=================================================================*/
 	output, err := client.DescribeVpcs(ctx,
 		&ec2.DescribeVpcsInput{
 			Filters: []ec2_types.Filter{

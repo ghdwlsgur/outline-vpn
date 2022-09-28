@@ -201,7 +201,6 @@ func AskInstanceType(ctx context.Context, cfg aws.Config, az string) (*InstanceT
 		--filters Name=location,Values=us-east-1a \
 		--region us-east-1
 	=================================================================*/
-
 	output, err := client.DescribeInstanceTypeOfferings(ctx,
 		&ec2.DescribeInstanceTypeOfferingsInput{
 			Filters: []ec2_types.Filter{
