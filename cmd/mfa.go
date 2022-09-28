@@ -49,6 +49,10 @@ var (
 			device := viper.GetString("mfa-device")
 
 			if device == "" {
+				/* AWS CLI Command Reference (https://docs.aws.amazon.com/cli/latest/reference/sts/get-caller-identity.html)
+				* Example========================================================
+				aws sts get-caller-identity
+				=================================================================*/
 				identity, err := client.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 				if err != nil {
 					panicRed(err)
