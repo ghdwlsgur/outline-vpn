@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -13,6 +14,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	git "gopkg.in/src-d/go-git.v4"
+
+	which "github.com/hairyhenderson/go-which"
 )
 
 const (
@@ -22,7 +25,8 @@ const (
 
 var (
 	path = func() string {
-		path, _ := os.Getwd()
+		path := which.Which("govpn")
+		path = strings.Replace(path, "bin", "lib", -1)
 		return path
 	}()
 
