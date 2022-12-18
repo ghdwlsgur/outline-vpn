@@ -3,4 +3,4 @@ dist
 vendor
 gopath 
 coverage.txt
-
+.DS_Store
