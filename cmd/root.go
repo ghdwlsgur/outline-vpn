@@ -193,7 +193,7 @@ func setTempConfig(awsRegion string, subcmd *cobra.Command) (string, aws.Config)
 		}
 		temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
 		if temporaryCredentialsError(temporaryCredentials, err, subcmd) {
-			panicRed(internal.WrapError(fmt.Errorf("[err] invalid global environments %s", err.Error())))
+			panicRed(internal.WrapError(fmt.Errorf("invalid global environments %s", err.Error())))
 		}
 	} else {
 		temporaryConfig, err = internal.NewSharedConfig(context.Background(),
@@ -218,7 +218,7 @@ func setTempConfig(awsRegion string, subcmd *cobra.Command) (string, aws.Config)
 				panicRed(internal.WrapError(err))
 			}
 			if temporaryCredentialsInvalid(temporaryCredentials) {
-				panicRed(internal.WrapError(fmt.Errorf("[err] not found credentials")))
+				panicRed(internal.WrapError(fmt.Errorf("not found credentials")))
 			}
 		}
 	}

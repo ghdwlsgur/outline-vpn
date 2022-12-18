@@ -131,7 +131,7 @@ var (
 			// terraform init [root] =============================================
 			if _, err := os.Stat(_defaultTerraformPath + "/.terraform"); err != nil {
 				if err = rootTf.Init(ctx, tfexec.Upgrade(true)); err != nil {
-					panicRed(fmt.Errorf("[err] failed to terraform init"))
+					panicRed(fmt.Errorf("failed to terraform init"))
 				}
 				internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[root] terraform init", "success")
 			} else {
@@ -187,13 +187,13 @@ var (
 
 			// terraform init [workspace] =============================================
 			if err = workSpaceTf.Init(ctx, tfexec.Upgrade(true)); err != nil {
-				panicRed(fmt.Errorf("[err] failed to terraform init"))
+				panicRed(fmt.Errorf("failed to terraform init"))
 			}
 			internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform init", "success")
 
 			// terraform plan [workspace] =============================================
 			if _, err = workSpaceTf.Plan(ctx, tfexec.VarFile(_defaultTerraformVars)); err != nil {
-				panicRed(fmt.Errorf("[err] failed to terraform plan"))
+				panicRed(fmt.Errorf("failed to terraform plan"))
 			}
 
 			internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform plan", "success")
