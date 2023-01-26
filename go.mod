@@ -6,9 +6,9 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/aws/aws-sdk-go-v2 v1.17.3
 	github.com/aws/aws-sdk-go-v2/config v1.18.9
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.9
+	github.com/aws/aws-sdk-go-v2/credentials v1.13.10
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.80.1
-	github.com/aws/aws-sdk-go-v2/service/sts v1.18.1
+	github.com/aws/aws-sdk-go-v2/service/sts v1.18.2
 	github.com/briandowns/spinner v1.20.0
 	github.com/fatih/color v1.13.0
 	github.com/hairyhenderson/go-which v0.2.0
