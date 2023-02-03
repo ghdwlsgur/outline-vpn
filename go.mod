@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.10
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.82.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.18.2
-	github.com/briandowns/spinner v1.20.0
+	github.com/briandowns/spinner v1.21.0
 	github.com/fatih/color v1.14.1
 	github.com/hairyhenderson/go-which v0.2.0
 	github.com/hashicorp/go-version v1.6.0
