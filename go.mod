@@ -14,7 +14,7 @@ require (
 	github.com/hairyhenderson/go-which v0.2.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/hc-install v0.5.0
-	github.com/hashicorp/hcl/v2 v2.16.0
+	github.com/hashicorp/hcl/v2 v2.16.1
 	github.com/hashicorp/terraform-exec v0.17.3
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
