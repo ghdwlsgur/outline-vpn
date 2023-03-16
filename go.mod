@@ -10,7 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.89.1
 	github.com/aws/aws-sdk-go-v2/service/sts v1.18.5
 	github.com/briandowns/spinner v1.23.0
-	github.com/fatih/color v1.14.1
+	github.com/fatih/color v1.15.0
 	github.com/hairyhenderson/go-which v0.2.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/hc-install v0.5.0
@@ -67,7 +67,7 @@ require (
 	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/net v0.6.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
