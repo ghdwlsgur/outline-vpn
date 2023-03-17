@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.17.6
 	github.com/aws/aws-sdk-go-v2/config v1.18.15
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.17
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.89.1
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.90.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.18.6
 	github.com/briandowns/spinner v1.23.0
 	github.com/fatih/color v1.15.0
