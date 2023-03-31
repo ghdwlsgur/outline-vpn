@@ -20,7 +20,7 @@ import (
 
 const (
 	_defaultProfile = "default"
-	_defaultGitUrl  = "https://github.com/ghdwlsgur/govpn-terraform"
+	_defaultGitURL  = "https://github.com/ghdwlsgur/govpn-terraform"
 )
 
 var (
@@ -49,11 +49,11 @@ var (
 	_credentialWithTemporary = fmt.Sprintf("%s_temporary", config.DefaultSharedCredentialsFilename())
 )
 
-type TerraformVarsJson struct {
-	Aws_Region        string
-	Ec2_Ami           string
-	Instance_Type     string
-	Availability_Zone string
+type TerraformVarsJSON struct {
+	AWSRegion        string
+	EC2Ami           string
+	InstanceType     string
+	AvailabilityZone string
 }
 
 type Credential struct {
@@ -78,7 +78,7 @@ func gitInit() {
 	if _, err := os.Stat(_defaultTerraformPath); errors.Is(err, os.ErrNotExist) {
 		// govpn-terraform folder does not exist
 		_, err := git.PlainClone(_defaultTerraformPath, false, &git.CloneOptions{
-			URL:      _defaultGitUrl,
+			URL:      _defaultGitURL,
 			Progress: os.Stdout,
 		})
 		if err != nil {

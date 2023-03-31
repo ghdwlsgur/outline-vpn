@@ -30,7 +30,7 @@ var (
 	instance *internal.EC2
 	err      error
 
-	_terraformVarsJson = &TerraformVarsJson{}
+	_terraformVarsJSON = &TerraformVarsJSON{}
 	workSpace          = &internal.Workspace{}
 )
 
@@ -48,13 +48,13 @@ var (
 				if err != nil {
 					panicRed(err)
 				}
-				json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJson)
+				json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJSON)
 
-				answer, err := internal.AskNewTfVars(_terraformVarsJson.Aws_Region, _terraformVarsJson.Availability_Zone, _terraformVarsJson.Instance_Type, _terraformVarsJson.Ec2_Ami)
+				answer, err := internal.AskNewTfVars(_terraformVarsJSON.AWSRegion, _terraformVarsJSON.AvailabilityZone, _terraformVarsJSON.InstanceType, _terraformVarsJSON.EC2Ami)
 				if err != nil {
 					panicRed(err)
 				}
-				_credential.awsConfig.Region = _terraformVarsJson.Aws_Region
+				_credential.awsConfig.Region = _terraformVarsJSON.AWSRegion
 
 				if strings.Split(answer, ",")[0] == "No" {
 					askRegion, err := internal.AskRegion(ctx, *_credential.awsConfig)
@@ -91,7 +91,7 @@ var (
 				scanVariable(ctx)
 			}
 
-			if _credential.awsConfig.Region != _terraformVarsJson.Aws_Region {
+			if _credential.awsConfig.Region != _terraformVarsJSON.AWSRegion {
 				panicRed(err)
 			}
 
@@ -169,7 +169,7 @@ var (
 
 			// create tf file [ main.tf / key.tf / output.tf / provider.tf ]
 			workSpace.Path = _defaultTerraformPath + "/terraform.tfstate.d/" + _credential.awsConfig.Region
-			err = internal.CreateTf(workSpace.Path, _terraformVarsJson.Aws_Region, _terraformVarsJson.Ec2_Ami, _terraformVarsJson.Instance_Type, _terraformVarsJson.Availability_Zone)
+			err = internal.CreateTf(workSpace.Path, _terraformVarsJSON.AWSRegion, _terraformVarsJSON.EC2Ami, _terraformVarsJSON.InstanceType, _terraformVarsJSON.AvailabilityZone)
 			if err != nil {
 				panicRed(err)
 			}
@@ -256,7 +256,7 @@ func scanVariable(ctx context.Context) error {
 		}
 		_credential.awsConfig.Region = askRegion.Name
 	}
-	_terraformVarsJson.Aws_Region = _credential.awsConfig.Region
+	_terraformVarsJSON.AWSRegion = _credential.awsConfig.Region
 
 	defaultVpc, err = internal.ExistsDefaultVpc(ctx, *_credential.awsConfig)
 	if err != nil {
@@ -286,7 +286,7 @@ func scanVariable(ctx context.Context) error {
 		if err != nil {
 			panicRed(err)
 		}
-		_terraformVarsJson.Availability_Zone = az.Name
+		_terraformVarsJSON.AvailabilityZone = az.Name
 	}
 	internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "availability-zone", az.Name)
 
@@ -332,7 +332,7 @@ func scanVariable(ctx context.Context) error {
 		if err != nil {
 			panicRed(err)
 		}
-		_terraformVarsJson.Instance_Type = ec2Type.Name
+		_terraformVarsJSON.InstanceType = ec2Type.Name
 	}
 	internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "instance-type", ec2Type.Name)
 
@@ -342,16 +342,16 @@ func scanVariable(ctx context.Context) error {
 		if err != nil {
 			panicRed(err)
 		}
-		_terraformVarsJson.Ec2_Ami = ami.Name
+		_terraformVarsJSON.EC2Ami = ami.Name
 	}
 	internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "ami-id", ami.Name)
 
 	// save tfvars ===============================
 	jsonData := make(map[string]interface{})
-	jsonData["aws_region"] = _terraformVarsJson.Aws_Region
-	jsonData["ec2_ami"] = _terraformVarsJson.Ec2_Ami
-	jsonData["instance_type"] = _terraformVarsJson.Instance_Type
-	jsonData["availability_zone"] = _terraformVarsJson.Availability_Zone
+	jsonData["aws_region"] = _terraformVarsJSON.AWSRegion
+	jsonData["eC2ami"] = _terraformVarsJSON.EC2Ami
+	jsonData["instancetype"] = _terraformVarsJSON.InstanceType
+	jsonData["availabilityzone"] = _terraformVarsJSON.AvailabilityZone
 
 	_, err = internal.SaveTerraformVariable(jsonData, _defaultTerraformVars)
 	if err != nil {
