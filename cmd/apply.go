@@ -349,9 +349,9 @@ func scanVariable(ctx context.Context) error {
 	// save tfvars ===============================
 	jsonData := make(map[string]interface{})
 	jsonData["aws_region"] = _terraformVarsJSON.AWSRegion
-	jsonData["eC2ami"] = _terraformVarsJSON.EC2Ami
-	jsonData["instancetype"] = _terraformVarsJSON.InstanceType
-	jsonData["availabilityzone"] = _terraformVarsJSON.AvailabilityZone
+	jsonData["ec2_ami"] = _terraformVarsJSON.EC2Ami
+	jsonData["instance_type"] = _terraformVarsJSON.InstanceType
+	jsonData["availability_zone"] = _terraformVarsJSON.AvailabilityZone
 
 	_, err = internal.SaveTerraformVariable(jsonData, _defaultTerraformVars)
 	if err != nil {
