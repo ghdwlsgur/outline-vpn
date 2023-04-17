@@ -24,6 +24,7 @@ const (
 )
 
 var (
+	// /opt/homebrew/lib/govpn
 	path = func() string {
 		path := which.Which("govpn")
 		path = strings.Replace(path, "bin", "lib", -1)
@@ -50,10 +51,10 @@ var (
 )
 
 type TerraformVarsJSON struct {
-	AWSRegion        string
-	EC2Ami           string
-	InstanceType     string
-	AvailabilityZone string
+	AWSRegion        string `json:"aws_region"`
+	EC2Ami           string `json:"ec2_ami"`
+	InstanceType     string `json:"instance_type"`
+	AvailabilityZone string `json:"availability_zone"`
 }
 
 type Credential struct {
