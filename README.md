@@ -128,6 +128,12 @@ $ govpn apply -r us-east-1
 $ govpn destroy -r ap-northeast-2
 ```
 
+![apply-command](https://user-images.githubusercontent.com/77400522/233245618-a4f51498-d46f-40fa-afb2-75b15faca059.png)
+
+> After executing the `govpn apply` command, register the received access key on the Outline Client App and connect.
+
+![outline-connect](https://user-images.githubusercontent.com/77400522/233245635-24d00bcf-677e-44de-b66c-cb1616c3c67c.jpeg)
+
 ### destroy
 
 > Delete a VPN server
@@ -141,6 +147,8 @@ $ govpn destroy -r us-east-1
 # Terminate EC2 in the ap-northeast-2 region.
 $ govpn destroy -r ap-northeast-2
 ```
+
+![destroy-command](https://user-images.githubusercontent.com/77400522/233246472-a5d3f164-49aa-402e-afd5-a444bf649a58.png)
 
 # Trouble Shooting
 
