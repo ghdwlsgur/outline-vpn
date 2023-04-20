@@ -19,7 +19,7 @@ func TestCreateDefaultVpc(t *testing.T) {
 	Region				Status				Default Vpc		result
 
 	ap-northeast-1		Active				Active			[err] A Default VPC already exists for this account in this region.
-	af-south-1			Inactive							[err] AWS was not able to validate the provided access credentials
+	af-south-1			Inactive										[err] AWS was not able to validate the provided access credentials
 	ap-southeast-2		Active				Inactive		[success]
 	============================================================================================================================*/
 
