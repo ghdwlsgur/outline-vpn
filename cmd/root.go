@@ -275,9 +275,9 @@ func libPrerequisite(libList []string) {
 
 func PrintFunc(field, value string) {
 	if len(field) < 8 {
-		fmt.Printf("%s\t\t\t(%s)\n", color.HiBlackString(field), value)
+		fmt.Printf("%s\t\t\t%s\n", color.HiBlackString(field), color.GreenString(fmt.Sprintf("("+value+")")))
 	} else {
-		fmt.Printf("%s\t\t(%s)\n", color.HiBlackString(field), value)
+		fmt.Printf("%s\t\t%s\n", color.HiBlackString(field), color.GreenString(fmt.Sprintf("("+value+")")))
 	}
 }
 
