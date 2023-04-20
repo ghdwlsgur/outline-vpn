@@ -25,6 +25,14 @@ Once the user selects a machine image, instance type, region, and availability z
 
 [🤝 Join Telegram Outline Channel](https://t.me/outlinevpnofficial)
 
+Outline is a Shadowsocks-based proxy created by Google. It lets you create and manage Shadowsocks servers easily. Outline clients are also well-designed applications available for all platforms.
+
+> It usually works as below.
+
+```bash
+[Outline client] <-> [Outline server] <-> [Internet]
+```
+
 # Security
 
 After creating the VPN server, the UDP and TCP ports of the security group are configured to allow access only from the public IP of the user who owns the VPN server to access the VPN service.
