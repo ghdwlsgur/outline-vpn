@@ -128,11 +128,15 @@ $ govpn apply -r us-east-1
 $ govpn destroy -r ap-northeast-2
 ```
 
-![apply-command](https://user-images.githubusercontent.com/77400522/233245618-a4f51498-d46f-40fa-afb2-75b15faca059.png)
+<p align="center">
+ <img src="https://user-images.githubusercontent.com/77400522/233245618-a4f51498-d46f-40fa-afb2-75b15faca059.png" />
+</p>
 
 > After executing the `govpn apply` command, register the received access key on the Outline Client App and connect.
 
-![outline-connect](https://user-images.githubusercontent.com/77400522/233245635-24d00bcf-677e-44de-b66c-cb1616c3c67c.jpeg)
+<p align="center">
+ <img src="https://user-images.githubusercontent.com/77400522/233247000-183c129a-f4fb-4580-97d9-3cc6d6438b99.jpeg" />
+</p>
 
 ### destroy
 
@@ -148,7 +152,9 @@ $ govpn destroy -r us-east-1
 $ govpn destroy -r ap-northeast-2
 ```
 
-![destroy-command](https://user-images.githubusercontent.com/77400522/233246472-a5d3f164-49aa-402e-afd5-a444bf649a58.png)
+<p align="center">
+ <img src="https://user-images.githubusercontent.com/77400522/233246472-a5d3f164-49aa-402e-afd5-a444bf649a58.png" />
+</p>
 
 # Trouble Shooting
 
