@@ -7,7 +7,7 @@
 
 ### GoVPN
 
-> It helps you quickly provision cloud servers for using [Outline VPN](https://getoutline.org/)
+> It can help you quickly provision a Shadowsocks-based VPN server on an AWS EC2 instance and assist you in using [Outline VPN](https://getoutline.org/) to use the VPN.
 
 <br>
 
@@ -21,11 +21,13 @@
 
 # Overview
 
-After the user selects an `machine image`, `instance type`, `region`, and `availability zone`, an EC2 is created in the default subnet within the selected availability zone in the default vpc. If you don't have a default vpc or default subnet, we'll help you create defulat vpc or default subnet. You can create one EC2 instance for each region. You can use the vpn service by pasting access key on the [Outline Client](https://getoutline.org/ko/get-started/#step-3) App.
+Once the user selects a machine image, instance type, region, and availability zone, an EC2 instance is created in the default subnet within the selected availability zone in the default VPC. If you don't have a default VPC or default subnet, we can assist you in creating them. You can create one EC2 instance per region. To use the VPN service, simply paste the access key into the [Outline Client](https://getoutline.org/ko/get-started/#step-3) App.
+
+[🤝 Join Telegram Outline Channel](https://t.me/outlinevpnofficial)
 
 # Security
 
-The VPN service can only be accessed from the public IP of the computer where you provisioned EC2 with the EC2 security group settings.
+After creating the VPN server, the UDP and TCP ports of the security group are configured to allow access only from the public IP of the user who owns the VPN server to access the VPN service.
 
 # Prerequisite
 
@@ -53,6 +55,33 @@ Provisioning speed may vary depending on instance type.
   ```
 
 - [optional] `~/.aws/credentials` or `~/.aws/credentials_temporary`
+
+### Library / Program
+
+- [required] jq
+
+  ```bash
+  brew install jq
+  ```
+
+- [required] rsync
+
+  ```bash
+  brew install rsync
+  ```
+
+- [required] terraform
+
+  ```bash
+  # install
+  brew tap hashicorp/tap
+  brew install hashicorp/tap/terraform
+
+  # upgrade
+  brew upgrade hashicorp/tap/terraform
+  ```
+
+- [required] [Outline Client](https://getoutline.org/ko/get-started/#step-3) (VPN connection purpose)
 
 # Result
 
@@ -83,9 +112,11 @@ brew upgrade govpn
 
 ### [Download](https://github.com/ghdwlsgur/govpn/releases)
 
-# How to use
+# How to use (command)
 
-### command
+### apply
+
+> Create a VPN server
 
 ```bash
 $ govpn apply
@@ -97,9 +128,9 @@ $ govpn apply -r us-east-1
 $ govpn destroy -r ap-northeast-2
 ```
 
-<p align="center">
-<img src="https://user-images.githubusercontent.com/77400522/191327327-8e757d14-1d8b-4996-a69b-f5d04ec446fb.mov" width="680", height="550" />
-</p>
+### destroy
+
+> Delete a VPN server
 
 ```bash
 $ govpn destroy
@@ -111,9 +142,17 @@ $ govpn destroy -r us-east-1
 $ govpn destroy -r ap-northeast-2
 ```
 
-<p align="center">
-<img src="https://user-images.githubusercontent.com/77400522/192142122-df7692a3-75ee-44f1-aee1-ea48e69eb4d9.mov" width="680", height="550" />
-</p>
+# Trouble Shooting
+
+while executing terraform init you might face the below error if you are working in a MAC with apple chip in it.
+
+<img width="863" alt="image" src="https://user-images.githubusercontent.com/77400522/233235056-2b4941ee-137c-4989-9602-f646ef4baa24.png">
+
+```bash
+brew install kreuzwerker/taps/m1-terraform-provider-helper
+m1-terraform-provider-helper activate
+m1-terraform-provider-helper install hashicorp/template -v v2.2.0
+```
 
 # License
 
