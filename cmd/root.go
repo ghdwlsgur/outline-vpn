@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -163,7 +164,7 @@ func findRegion(awsRegion string) {
 		}
 		_credential.awsConfig.Region = region.Name
 	}
-	color.Green("region \t\t\t(%s)\n\n", _credential.awsConfig.Region)
+	color.Green("region \t\t\t(%s)\n", _credential.awsConfig.Region)
 }
 
 func setTempConfig(awsRegion string, subcmd *cobra.Command) (string, aws.Config) {
@@ -253,10 +254,38 @@ func createTemporaryCredentialsFile(temporaryCredentialsString, awsRegion string
 	return awsRegion
 }
 
+func libraryCheck(lib string) error {
+	_, err := exec.LookPath(lib)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func libPrerequisite(libList []string) {
+	for _, lib := range libList {
+		if err = libraryCheck(lib); err != nil {
+			panicRed(fmt.Errorf("⚠️  %s is not installed\n[required] jq, rsync and terraform must be installed as prerequisites.", lib))
+		} else {
+			PrintFunc(lib, "ready")
+		}
+	}
+	fmt.Println()
+}
+
+func PrintFunc(field, value string) {
+	if len(field) < 8 {
+		fmt.Printf("%s\t\t\t(%s)\n", color.HiBlackString(field), value)
+	} else {
+		fmt.Printf("%s\t\t(%s)\n", color.HiBlackString(field), value)
+	}
+}
+
 func initConfig() {
 
 	_credential = &Credential{}
 	gitInit()
+
 	findProfile()
 	findSharedCredFile()
 
@@ -287,6 +316,9 @@ func initConfig() {
 		awsRegion = createTemporaryCredentialsFile(temporaryCredentialsString, awsRegion, temporaryConfig)
 	}
 	findRegion(awsRegion)
+
+	libList := []string{"jq", "rsync", "terraform"}
+	libPrerequisite(libList)
 }
 
 func init() {
