@@ -20,6 +20,64 @@ const (
 	terraformVersion = "1.4.5"
 )
 
+func terraformReady(ctx context.Context, version string) (*root, error) {
+	r := &root{}
+
+	r.execPath, err = internal.TerraformReady(ctx, version)
+	if err != nil {
+		return nil, err
+	}
+	r.workspace, err = internal.SetRoot(r.execPath, _defaultTerraformPath)
+	if err != nil {
+		return nil, err
+	}
+	internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[root] terraform-state", "ready")
+
+	return r, nil
+}
+
+func terraformInit(r *root, ctx context.Context) error {
+	if _, err := os.Stat(_defaultTerraformPath + "/.terraform"); err != nil {
+		if err = r.workspace.Init(ctx, tfexec.Upgrade(true)); err != nil {
+			return fmt.Errorf("failed to terraform init")
+		}
+		internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[root] terraform init", "success")
+	} else {
+		internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[root] terraform init", "already-done")
+	}
+	return nil
+}
+
+func findInstance(ctx context.Context, r *root) error {
+	instance, err = internal.FindSpecificTagInstance(ctx, *_credential.awsConfig, _credential.awsConfig.Region)
+	if err != nil {
+		return err
+	}
+
+	switch instance.Existence {
+	case true:
+		return fmt.Errorf("⚠️  You already have EC2 %s", _credential.awsConfig.Region)
+	case false:
+		workSpace, err = internal.SelectWorkspace(ctx, r.execPath, _defaultTerraformPath, _credential.awsConfig.Region, workSpace)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("%s %s\n", color.HiCyanString("[terraform-workspace-select]"), color.HiCyanString(workSpace.Now))
+	}
+
+	return nil
+}
+
+type root struct {
+	execPath  string
+	workspace *tfexec.Terraform
+
+	regionSpace struct {
+		execPath  string
+		workspace *tfexec.Terraform
+	}
+}
+
 var (
 	ami           *internal.Ami
 	az            *internal.AvailabilityZone
@@ -84,7 +142,6 @@ var (
 							os.Exit(1)
 						}
 					}
-
 					scanVariable(ctx)
 				}
 			} else {
@@ -118,53 +175,37 @@ var (
 			}
 
 			// terraform ready [root] =============================================
-			rootExecPath, err := internal.TerraformReady(ctx, terraformVersion)
+			r, err := terraformReady(ctx, terraformVersion)
 			if err != nil {
 				panicRed(err)
 			}
-			rootTf, err := internal.SetRoot(rootExecPath, _defaultTerraformPath)
-			if err != nil {
-				panicRed(err)
-			}
-			internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[root] terraform-state", "ready")
 
 			// terraform init [root] =============================================
-			if _, err := os.Stat(_defaultTerraformPath + "/.terraform"); err != nil {
-				if err = rootTf.Init(ctx, tfexec.Upgrade(true)); err != nil {
-					panicRed(fmt.Errorf("failed to terraform init"))
-				}
-				internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[root] terraform init", "success")
-			} else {
-				internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[root] terraform init", "already-done")
-			}
-
-			workSpace, err = internal.ExistsWorkspace(ctx, rootExecPath, _defaultTerraformPath, _credential.awsConfig.Region)
+			err = terraformInit(r, ctx)
 			if err != nil {
 				panicRed(err)
 			}
 
+			workSpace, err = internal.ExistsWorkspace(ctx, r.execPath, _defaultTerraformPath, _credential.awsConfig.Region)
+			if err != nil {
+				panicRed(err)
+			}
 			if workSpace.Existence {
-				instance, err = internal.FindSpecificTagInstance(ctx, *_credential.awsConfig, _credential.awsConfig.Region)
+
+				err = findInstance(ctx, r)
 				if err != nil {
 					panicRed(err)
 				}
 
-				if instance.Existence {
-					panicRed(fmt.Errorf("⚠️  You already have EC2 %s", _credential.awsConfig.Region))
-				} else {
-					workSpace, err = internal.SelectWorkspace(ctx, rootExecPath, _defaultTerraformPath, _credential.awsConfig.Region, workSpace)
-					if err != nil {
-						panicRed(err)
-					}
-					fmt.Printf("%s %s\n", color.HiCyanString("[terraform-workspace-select]"), color.HiCyanString(workSpace.Now))
-				}
 			} else {
+
 				if err = internal.CreateWorkspace(ctx,
-					rootExecPath, _defaultTerraformPath, _credential.awsConfig.Region); err != nil {
+					r.execPath, _defaultTerraformPath, _credential.awsConfig.Region); err != nil {
 					panicRed(err)
 				}
 				workSpace.Now = _credential.awsConfig.Region
 				fmt.Printf("%s %s\n", color.HiCyanString("[terraform-workspace-new]"), color.HiCyanString(workSpace.Now))
+
 			}
 
 			// create tf file [ main.tf / key.tf / output.tf / provider.tf ]
@@ -326,16 +367,6 @@ func scanVariable(ctx context.Context) error {
 		}
 	}
 
-	// user inputs Instance Type value
-	if ec2Type == nil {
-		ec2Type, err = internal.AskInstanceType(ctx, *_credential.awsConfig, az.Name)
-		if err != nil {
-			panicRed(err)
-		}
-		_terraformVarsJSON.InstanceType = ec2Type.Name
-	}
-	internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "instance-type", ec2Type.Name)
-
 	// user inputs Amazon Machine Image
 	if ami == nil {
 		ami, err = internal.AskAmi(ctx, *_credential.awsConfig)
@@ -345,6 +376,17 @@ func scanVariable(ctx context.Context) error {
 		_terraformVarsJSON.EC2Ami = ami.Name
 	}
 	internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "ami-id", ami.Name)
+
+	// user inputs Instance Type value
+	if ec2Type == nil {
+		// ec2Type, err = internal.AskInstanceType(ctx, *_credential.awsConfig, az.Name)
+		ec2Type, err = internal.AskInstanceType(ctx, *_credential.awsConfig, az.Name)
+		if err != nil {
+			panicRed(err)
+		}
+		_terraformVarsJSON.InstanceType = ec2Type.Name
+	}
+	internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "instance-type", ec2Type.Name)
 
 	// save tfvars ===============================
 	jsonData := make(map[string]interface{})
