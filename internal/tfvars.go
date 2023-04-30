@@ -18,22 +18,7 @@ import (
 	"github.com/fatih/color"
 )
 
-var (
-	defaultAmis = []string{
-		"ami-00f881f027a6d74a0", // ca-central-1
-		"ami-02d1e544b84bf7502", // us-east-2
-		"ami-0cff7528ff583bf9a", // us-east-1
-		"ami-0d9858aa3c6322f73", // us-west-1
-		"ami-098e42ae54c764c35", // us-west-2
-		"ami-08df646e18b182346", // ap-south-1
-		"ami-0c66c8e259df7ec04", // ap-northeast-3
-		"ami-0fd0765afb77bcca7", // ap-northeast-2
-		"ami-0b7546e839d7ace12", // ap-northeast-1
-		"ami-0c802847a7dd848c0", // ap-southeast-1
-		"ami-07620139298af599e", // ap-southeast-2
-		"ami-037c192f0fa52a358", // sa-east-1
-	}
-
+const (
 	defaultInstanceType = "t2.micro"
 	defaultIpv4Url      = "http://ipv4.icanhazip.com"
 )
@@ -137,37 +122,92 @@ func FindSpecificTagInstance(ctx context.Context, cfg aws.Config, region string)
 	return &EC2{Existence: false}, nil
 }
 
-func FindTagInstance(ctx context.Context, cfg aws.Config) (*EC2, error) {
+func FindTagInstance(ctx context.Context, cfg aws.Config) ([]string, error) {
 
 	client := ec2.NewFromConfig(cfg)
-	defaultInstanceTagName = fmt.Sprintf("govpn-ec2-%s", cfg.Region)
 
-	output, err := client.DescribeInstances(ctx,
-		&ec2.DescribeInstancesInput{
+	var regions []string
+	var runningRegions []string
+
+	outputObj, err := client.DescribeRegions(ctx,
+		&ec2.DescribeRegionsInput{
 			Filters: []ec2_types.Filter{
-				{Name: aws.String("instance-state-name"), Values: []string{"running"}},
-				{Name: aws.String("tag:Name"), Values: []string{defaultInstanceTagName}},
+				{Name: aws.String("endpoint"), Values: []string{"*"}},
 			},
-		},
-	)
-	if err != nil {
-		return &EC2{}, err
-	}
+		})
 
-	if len(output.Reservations) > 0 {
-		for _, reservations := range output.Reservations {
-			for _, ec2 := range reservations.Instances {
-				return &EC2{
-					Existence:    true,
-					Id:           aws.ToString(ec2.InstanceId),
-					PublicIP:     aws.ToString(ec2.PublicIpAddress),
-					LaunchTime:   aws.ToTime(ec2.LaunchTime),
-					InstanceType: aws.ToString((*string)(&ec2.InstanceType)),
-				}, nil
-			}
+	if err != nil {
+		return nil, err
+	} else {
+		regions = make([]string, 0, len(outputObj.Regions))
+		for _, region := range outputObj.Regions {
+			regions = append(regions, aws.ToString(region.RegionName))
 		}
 	}
-	return &EC2{Existence: false}, nil
+	sort.Strings(regions)
+
+	for _, region := range regions {
+
+		cfg.Region = region
+		client := ec2.NewFromConfig(cfg)
+		defaultInstanceTagName = fmt.Sprintf("govpn-ec2-%s", region)
+
+		output, err := client.DescribeInstances(ctx,
+			&ec2.DescribeInstancesInput{
+				Filters: []ec2_types.Filter{
+					{Name: aws.String("instance-state-name"), Values: []string{"running"}},
+					{Name: aws.String("tag:Name"), Values: []string{defaultInstanceTagName}},
+				},
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(output.Reservations) > 0 {
+			runningRegions = append(runningRegions, region)
+			// for _, reservations := range output.Reservations {
+
+			// for _, ec2 := range reservations.Instances {
+
+			// return &EC2{
+			// 	Existence:    true,
+			// 	Id:           aws.ToString(ec2.InstanceId),
+			// 	PublicIP:     aws.ToString(ec2.PublicIpAddress),
+			// 	LaunchTime:   aws.ToTime(ec2.LaunchTime),
+			// 	InstanceType: aws.ToString((*string)(&ec2.InstanceType)),
+			// }, nil
+			// }
+			// }
+		}
+	}
+
+	// output, err := client.DescribeInstances(ctx,
+	// 	&ec2.DescribeInstancesInput{
+	// 		Filters: []ec2_types.Filter{
+	// 			{Name: aws.String("instance-state-name"), Values: []string{"running"}},
+	// 			{Name: aws.String("tag:Name"), Values: []string{defaultInstanceTagName}},
+	// 		},
+	// 	},
+	// )
+	// if err != nil {
+	// 	return &EC2{}, err
+	// }
+
+	// if len(output.Reservations) > 0 {
+	// 	for _, reservations := range output.Reservations {
+	// 		for _, ec2 := range reservations.Instances {
+	// 			return &EC2{
+	// 				Existence:    true,
+	// 				Id:           aws.ToString(ec2.InstanceId),
+	// 				PublicIP:     aws.ToString(ec2.PublicIpAddress),
+	// 				LaunchTime:   aws.ToTime(ec2.LaunchTime),
+	// 				InstanceType: aws.ToString((*string)(&ec2.InstanceType)),
+	// 			}, nil
+	// 		}
+	// 	}
+	// }
+	return runningRegions, nil
 }
 
 func AskNewTfVars(region, az, instanceType, ami string) (string, error) {
@@ -344,8 +384,7 @@ func AskAmi(ctx context.Context, cfg aws.Config) (*Ami, error) {
 	)
 
 	if err != nil {
-		amis = make([]string, len(defaultAmis))
-		copy(amis, defaultAmis)
+		return nil, err
 	} else {
 		amis = make([]string, 0, len(table))
 		outputFunc(table, output)
