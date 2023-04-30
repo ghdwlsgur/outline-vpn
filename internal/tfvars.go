@@ -190,6 +190,8 @@ func AskNewTfVars(region, az, instanceType, ami string) (string, error) {
 }
 
 func AskInstanceType(ctx context.Context, cfg aws.Config, az string) (*InstanceType, error) {
+	var instanceTypesPerLocation []string
+	var instanceTypesPerArchitecture []string
 	var instanceTypes []string
 
 	client := ec2.NewFromConfig(cfg)
@@ -200,8 +202,31 @@ func AskInstanceType(ctx context.Context, cfg aws.Config, az string) (*InstanceT
 		--location-type availability-zone \
 		--filters Name=location,Values=us-east-1a \
 		--region us-east-1
+
+	aws ec2 describe-instance-types \
+	--filters "Name=processor-info.supported-architecture,Values=x86_64" \
+	--filters "Name=current-generation,Values=true"
 	=================================================================*/
-	output, err := client.DescribeInstanceTypeOfferings(ctx,
+
+	outputByArchitecture, err := client.DescribeInstanceTypes(ctx,
+		&ec2.DescribeInstanceTypesInput{
+			Filters: []ec2_types.Filter{
+				{Name: aws.String("processor-info.supported-architecture"), Values: []string{"x86_64"}},
+				{Name: aws.String("current-generation"), Values: []string{"true"}},
+			},
+		},
+	)
+
+	if err != nil {
+		instanceTypesPerArchitecture = make([]string, 1)
+		copy(instanceTypesPerArchitecture, []string{defaultInstanceType})
+	} else {
+		instanceTypesPerArchitecture = make([]string, 0, len(outputByArchitecture.InstanceTypes))
+		for _, offering := range outputByArchitecture.InstanceTypes {
+			instanceTypesPerArchitecture = append(instanceTypesPerArchitecture, aws.ToString((*string)(&offering.InstanceType)))
+		}
+	}
+	outputByLocation, err := client.DescribeInstanceTypeOfferings(ctx,
 		&ec2.DescribeInstanceTypeOfferingsInput{
 			Filters: []ec2_types.Filter{
 				{Name: aws.String("location"), Values: []string{az}},
@@ -211,12 +236,20 @@ func AskInstanceType(ctx context.Context, cfg aws.Config, az string) (*InstanceT
 	)
 
 	if err != nil {
-		instanceTypes = make([]string, 1)
-		copy(instanceTypes, []string{defaultInstanceType})
+		instanceTypesPerLocation = make([]string, 1)
+		copy(instanceTypesPerLocation, []string{defaultInstanceType})
 	} else {
-		instanceTypes = make([]string, 0, len(output.InstanceTypeOfferings))
-		for _, offering := range output.InstanceTypeOfferings {
-			instanceTypes = append(instanceTypes, aws.ToString((*string)(&offering.InstanceType)))
+		instanceTypesPerLocation = make([]string, 0, len(outputByLocation.InstanceTypeOfferings))
+		for _, offering := range outputByLocation.InstanceTypeOfferings {
+			instanceTypesPerLocation = append(instanceTypesPerLocation, aws.ToString((*string)(&offering.InstanceType)))
+		}
+	}
+
+	for _, v1 := range instanceTypesPerArchitecture {
+		for _, v2 := range instanceTypesPerLocation {
+			if v1 == v2 {
+				instanceTypes = append(instanceTypes, v1)
+			}
 		}
 	}
 	sort.Strings(instanceTypes)
