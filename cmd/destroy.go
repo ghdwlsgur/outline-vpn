@@ -43,7 +43,7 @@ var (
 				}
 			}
 
-			instance, err = internal.FindTagInstance(ctx, *_credential.awsConfig)
+			instance, err = internal.FindSpecificTagInstance(ctx, *_credential.awsConfig, _credential.awsConfig.Region)
 			if err != nil {
 				panicRed(err)
 			}
