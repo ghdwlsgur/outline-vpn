@@ -10,7 +10,7 @@ import (
 	"github.com/fatih/color"
 )
 
-var (
+const (
 	defaultVpcTagName = "govpn-vpc"
 )
 
