@@ -39,7 +39,7 @@ func terraformReady(ctx context.Context, version string) (*root, error) {
 	if err != nil {
 		return nil, err
 	}
-	internal.PrintProvisioning("[root]", "terraform-state: ", "ready")
+	internal.PrintProvisioning("[root]", "terraform-state:", "ready")
 	return r, nil
 }
 
@@ -48,9 +48,9 @@ func terraformInit(r *root, ctx context.Context) error {
 		if err = r.workspace.Init(ctx, tfexec.Upgrade(true)); err != nil {
 			return fmt.Errorf("failed to terraform init")
 		}
-		internal.PrintProvisioning("[root]", "terraform init: ", "success")
+		internal.PrintProvisioning("[root]", "terraform init:", "success")
 	} else {
-		internal.PrintProvisioning("[root]", "terraform init: ", "already-done")
+		internal.PrintProvisioning("[root]", "terraform init:", "already-done")
 	}
 	return nil
 }
@@ -367,19 +367,19 @@ var (
 			if err != nil {
 				panicRed(err)
 			}
-			internal.PrintProvisioning("[workspace]", "terraform-state: ", "ready")
+			internal.PrintProvisioning("[workspace]", "terraform-state:", "ready")
 
 			// terraform init [workspace] =============================================
 			if err = workSpaceTf.Init(ctx, tfexec.Upgrade(true)); err != nil {
 				panicRed(fmt.Errorf("failed to terraform init"))
 			}
-			internal.PrintProvisioning("[workspace]", "terraform-init: ", "success")
+			internal.PrintProvisioning("[workspace]", "terraform-init:", "success")
 
 			// terraform plan [workspace] =============================================
 			if _, err = workSpaceTf.Plan(ctx, tfexec.VarFile(_defaultTerraformVars)); err != nil {
 				panicRed(fmt.Errorf("failed to terraform plan"))
 			}
-			internal.PrintProvisioning("[workspace]", "terraform-plan: ", "success")
+			internal.PrintProvisioning("[workspace]", "terraform-plan:", "success")
 
 			answer, err := internal.AskTerraformExecution("Do You Provision EC2 Instance:")
 			if err != nil {
@@ -410,7 +410,20 @@ var (
 
 				s.Stop()
 				congratulation("🎉 Provisioning Complete! 🎉\n")
-				congratulation(state.Values.Outputs["access_key"].Value)
+				result := fmt.Sprintf("accessKey: %v\n", state.Values.Outputs["access_key"].Value)
+				congratulation(result)
+
+				apiURL, err := internal.GetApiURL(_credential.awsConfig.Region)
+				if err != nil {
+					panicRed(err)
+				}
+				congratulation("apiURL: " + apiURL + "\n")
+
+				certSha256, err := internal.GetCertSha256(_credential.awsConfig.Region)
+				if err != nil {
+					panicRed(err)
+				}
+				congratulation("certSha256: " + certSha256 + "\n")
 
 				go func() {
 					cancel()
