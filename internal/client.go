@@ -300,7 +300,7 @@ func CreateTags(ctx context.Context, cfg aws.Config, id *string, tagName string)
 }
 
 func PrintReady(cmd, region, title, content string) {
-	fmt.Printf("%s %s %s [%s: %s]\n",
+	fmt.Printf("%s %s %s [ %s: %s ]\n",
 		color.GreenString(cmd),
 		color.HiBlackString("region:"),
 		color.HiBlackString(region),
