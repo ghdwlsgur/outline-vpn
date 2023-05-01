@@ -347,7 +347,7 @@ var (
 					panicRed(err)
 				}
 				workSpace.Now = _credential.awsConfig.Region
-				fmt.Printf("%s %s\n", color.HiCyanString("[terraform-workspace-new]"), color.HiCyanString(workSpace.Now))
+				fmt.Printf("%s %s\n", color.HiBlackString("terraform workspace new"), color.HiMagentaString(workSpace.Now))
 
 			}
 
@@ -368,21 +368,18 @@ var (
 				panicRed(err)
 			}
 			internal.PrintProvisioning("[workspace]", "terraform-state: ", "ready")
-			// internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform-state", "ready")
 
 			// terraform init [workspace] =============================================
 			if err = workSpaceTf.Init(ctx, tfexec.Upgrade(true)); err != nil {
 				panicRed(fmt.Errorf("failed to terraform init"))
 			}
 			internal.PrintProvisioning("[workspace]", "terraform-init: ", "success")
-			// internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform init", "success")
 
 			// terraform plan [workspace] =============================================
 			if _, err = workSpaceTf.Plan(ctx, tfexec.VarFile(_defaultTerraformVars)); err != nil {
 				panicRed(fmt.Errorf("failed to terraform plan"))
 			}
 			internal.PrintProvisioning("[workspace]", "terraform-plan: ", "success")
-			// internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform plan", "success")
 
 			answer, err := internal.AskTerraformExecution("Do You Provision EC2 Instance:")
 			if err != nil {
