@@ -174,16 +174,15 @@ func setTempConfig(awsRegion string, subcmd *cobra.Command) (string, aws.Config)
 	var temporaryCredentials aws.Credentials
 	var temporaryConfig aws.Config
 
-	var temporaryCredentialsError = func(temporaryCredentials aws.Credentials, err error, subcmd *cobra.Command) bool {
-		return (err != nil ||
-			temporaryCredentials.Expired() ||
+	var temporaryCredentialsInvalid = func(temporaryCredentials aws.Credentials) bool {
+		return temporaryCredentials.Expired() ||
 			temporaryCredentials.AccessKeyID == "" ||
 			temporaryCredentials.SecretAccessKey == "" ||
-			temporaryCredentials.SessionToken == "")
+			temporaryCredentials.SessionToken == ""
 	}
 
-	var temporaryCredentialsInvalid = func(temporaryCredentials aws.Credentials) bool {
-		return temporaryCredentials.Expired() || temporaryCredentials.AccessKeyID == "" || temporaryCredentials.SecretAccessKey == ""
+	var temporaryCredentialsError = func(temporaryCredentials aws.Credentials, err error, subcmd *cobra.Command) bool {
+		return temporaryCredentialsInvalid(temporaryCredentials)
 	}
 
 	if os.Getenv("AWS_ACCESS_KEY_ID") != "" && os.Getenv("AWS_SECRET_ACCESS_KEY") != "" {
@@ -196,6 +195,7 @@ func setTempConfig(awsRegion string, subcmd *cobra.Command) (string, aws.Config)
 		if err != nil {
 			panicRed(internal.WrapError(err))
 		}
+
 		temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
 		if temporaryCredentialsError(temporaryCredentials, err, subcmd) {
 			panicRed(internal.WrapError(fmt.Errorf("invalid global environments %s", err.Error())))
