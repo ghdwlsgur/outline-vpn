@@ -11,6 +11,52 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func deleteTagSubnet(ctx context.Context) error {
+	tagSubnet, err := internal.ExistsTagSubnet(ctx, *_credential.awsConfig)
+	if err != nil {
+		return err
+	}
+
+	if tagSubnet.Existence {
+		answer, err := internal.AskDeleteTagSubnet()
+		if err != nil {
+			return err
+		}
+
+		if answer == "Yes" {
+			_, err := internal.DeleteTagSubnet(ctx, *_credential.awsConfig, tagSubnet.ID)
+			if err != nil {
+				return err
+			}
+			congratulation("🎉 Delete Subnet Complete! 🎉\n")
+		}
+	}
+	return nil
+}
+
+func deleteTagVPC(ctx context.Context) error {
+	tagVpc, err := internal.ExistsTagVpc(ctx, *_credential.awsConfig)
+	if err != nil {
+		return err
+	}
+
+	if tagVpc.Existence {
+		answer, err := internal.AskDeleteTagVpc()
+		if err != nil {
+			return err
+		}
+
+		if answer == "Yes" {
+			_, err := internal.DeleteTagVpc(ctx, *_credential.awsConfig, tagVpc.Id)
+			if err != nil {
+				return err
+			}
+			congratulation("🎉 Delete VPC Complete! 🎉\n")
+		}
+	}
+	return nil
+}
+
 var (
 	destroyCommand = &cobra.Command{
 		Use:   "destroy",
@@ -23,26 +69,6 @@ var (
 
 			ctx := context.Background()
 
-			notice := color.New(color.Bold, color.FgHiRed).PrintfFunc()
-			congratulation := color.New(color.Bold, color.FgHiGreen).PrintFunc()
-
-			tagSubnet, err := internal.ExistsTagSubnet(ctx, *_credential.awsConfig)
-			if err != nil {
-				panicRed(err)
-			}
-
-			if tagSubnet.Existence {
-
-				answer, err := internal.AskDeleteTagSubnet()
-				if err != nil {
-					panicRed(err)
-				}
-
-				if answer == "Yes" {
-					internal.DeleteTagSubnet(ctx, *_credential.awsConfig, tagSubnet.ID)
-				}
-			}
-
 			instance, err = internal.FindSpecificTagInstance(ctx, *_credential.awsConfig, _credential.awsConfig.Region)
 			if err != nil {
 				panicRed(err)
@@ -53,6 +79,7 @@ var (
 				if err != nil {
 					panicRed(err)
 				}
+
 				if vpnConnect {
 					panicRed(fmt.Errorf(`⚠️  Please Disconnect Outline VPN and Try Again`))
 				}
@@ -141,24 +168,14 @@ var (
 				}
 			}
 
-			tagVpc, err := internal.ExistsTagVpc(ctx, *_credential.awsConfig)
+			err := deleteTagSubnet(ctx)
 			if err != nil {
 				panicRed(err)
 			}
 
-			if tagVpc.Existence {
-				answer, err := internal.AskDeleteTagVpc()
-				if err != nil {
-					panicRed(err)
-				}
-
-				if answer == "Yes" {
-					_, err := internal.DeleteTagVpc(ctx, *_credential.awsConfig, tagVpc.Id)
-					if err != nil {
-						panicRed(err)
-					}
-					congratulation("🎉 Delete VPC Complete! 🎉")
-				}
+			err = deleteTagVPC(ctx)
+			if err != nil {
+				panicRed(err)
 			}
 
 		},

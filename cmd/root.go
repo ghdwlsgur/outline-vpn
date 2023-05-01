@@ -49,6 +49,9 @@ var (
 	_credential              *Credential
 	_credentialWithMFA       = fmt.Sprintf("%s_mfa", config.DefaultSharedConfigFilename())
 	_credentialWithTemporary = fmt.Sprintf("%s_temporary", config.DefaultSharedCredentialsFilename())
+
+	congratulation = color.New(color.Bold, color.FgHiGreen).PrintFunc()
+	notice         = color.New(color.Bold, color.FgHiRed).PrintfFunc()
 )
 
 type TerraformVarsJSON struct {
@@ -244,6 +247,7 @@ func createTemporaryCredentialsFile(temporaryCredentialsString, awsRegion string
 		[]string{},
 		[]string{_credentialWithTemporary})
 	if err != nil {
+		panicRed(err)
 		panicRed(internal.WrapError(err))
 	}
 	_credential.awsConfig = &awsConfig

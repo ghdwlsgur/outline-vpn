@@ -20,6 +20,14 @@ const (
 	terraformVersion = "1.4.5"
 )
 
+var (
+	stsRegionError = fmt.Errorf(`
+	⚠️  [privacy] Direct permission modification is required.
+	1. Aws Console -> IAM -> Account Settings
+	2. Click Activate for the region where you want to create the default VPC.
+			`)
+)
+
 func terraformReady(ctx context.Context, version string) (*root, error) {
 	r := &root{}
 
@@ -31,8 +39,7 @@ func terraformReady(ctx context.Context, version string) (*root, error) {
 	if err != nil {
 		return nil, err
 	}
-	internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[root] terraform-state", "ready")
-
+	internal.PrintProvisioning("[root]", "terraform-state: ", "ready")
 	return r, nil
 }
 
@@ -41,9 +48,9 @@ func terraformInit(r *root, ctx context.Context) error {
 		if err = r.workspace.Init(ctx, tfexec.Upgrade(true)); err != nil {
 			return fmt.Errorf("failed to terraform init")
 		}
-		internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[root] terraform init", "success")
+		internal.PrintProvisioning("[root]", "terraform init: ", "success")
 	} else {
-		internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[root] terraform init", "already-done")
+		internal.PrintProvisioning("[root]", "terraform init: ", "already-done")
 	}
 	return nil
 }
@@ -58,11 +65,17 @@ func findInstance(ctx context.Context, r *root) error {
 	case true:
 		return fmt.Errorf("⚠️  You already have EC2 %s", _credential.awsConfig.Region)
 	case false:
-		workSpace, err = internal.SelectWorkspace(ctx, r.execPath, _defaultTerraformPath, _credential.awsConfig.Region, workSpace)
+		workSpace, err = internal.SelectWorkspace(ctx,
+			r.execPath,
+			_defaultTerraformPath,
+			_credential.awsConfig.Region,
+			workSpace,
+		)
+
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%s %s\n", color.HiCyanString("[terraform-workspace-select]"), color.HiCyanString(workSpace.Now))
+		fmt.Printf("%s %s\n", color.HiBlackString("terraform workspace select"), color.HiMagentaString(workSpace.Now))
 	}
 
 	return nil
@@ -81,7 +94,7 @@ type root struct {
 var (
 	ami           *internal.Ami
 	az            *internal.AvailabilityZone
-	ec2Type       *internal.InstanceType
+	instanceType  *internal.InstanceType
 	defaultVpc    *internal.DefaultVpc
 	defaultSubnet *internal.DefaultSubnet
 
@@ -92,6 +105,173 @@ var (
 	workSpace          = &internal.Workspace{}
 )
 
+func decodeTerraformVarsFile() (string, error) {
+
+	buffer, err := os.ReadFile(_defaultTerraformVars)
+	if err != nil {
+		return "", err
+	}
+	json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJSON)
+
+	answer, err := internal.AskNewTfVars(
+		_terraformVarsJSON.AWSRegion,
+		_terraformVarsJSON.AvailabilityZone,
+		_terraformVarsJSON.InstanceType,
+		_terraformVarsJSON.EC2Ami,
+	)
+	if err != nil {
+		return "", err
+	}
+	_credential.awsConfig.Region = _terraformVarsJSON.AWSRegion
+
+	return strings.Split(answer, ",")[0], nil
+}
+
+func isExistDefaultSubnet(ctx context.Context) error {
+	defaultSubnet, err := internal.ExistsDefaultSubnet(ctx, *_credential.awsConfig, _terraformVarsJSON.AvailabilityZone)
+	if err != nil {
+		return err
+	}
+
+	if !defaultSubnet.Existence {
+		answer, err := internal.AskCreateDefaultSubnet()
+		if err != nil {
+			return err
+		}
+
+		if answer == "Yes" {
+			_, err = internal.CreateDefaultSubnet(ctx, *_credential.awsConfig, _terraformVarsJSON.AvailabilityZone)
+			if err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf("invalid default subnet")
+		}
+	}
+	return nil
+}
+
+func isExistDefaultVpc(ctx context.Context) error {
+	defaultVpc, err = internal.ExistsDefaultVpc(ctx, *_credential.awsConfig)
+	if err != nil {
+		panicRed(err)
+	}
+
+	if !defaultVpc.Existence {
+		answer, err := internal.AskCreateDefaultVpc()
+		if err != nil {
+			return err
+		}
+
+		if answer == "Yes" {
+			vpc, err := internal.CreateDefaultVpc(ctx, *_credential.awsConfig)
+			if err != nil {
+				return err
+			}
+			internal.PrintReady("[create-vpc]", _credential.awsConfig.Region, "vpc-id", vpc.Id)
+		} else {
+			os.Exit(1)
+		}
+	}
+	return nil
+}
+
+func inputRegion(ctx context.Context) error {
+	if _credential.awsConfig.Region == "" {
+		region, err := internal.AskRegion(ctx, *_credential.awsConfig)
+		if err != nil {
+			return err
+		}
+		_credential.awsConfig.Region = region.Name
+	}
+	_terraformVarsJSON.AWSRegion = _credential.awsConfig.Region
+	return nil
+}
+
+func inputAvailabilityZone(ctx context.Context) error {
+	if az == nil {
+		az, err := internal.AskAvailabilityZone(ctx, *_credential.awsConfig)
+		if err != nil {
+			return err
+		}
+		_terraformVarsJSON.AvailabilityZone = az.Name
+	}
+	return nil
+}
+
+func inputAmi(ctx context.Context) error {
+	if ami == nil {
+		ami, err = internal.AskAmi(ctx, *_credential.awsConfig)
+		if err != nil {
+			return err
+		}
+		_terraformVarsJSON.EC2Ami = ami.Name
+	}
+	return nil
+}
+
+func inputInstanceType(ctx context.Context) error {
+	if instanceType == nil {
+		instanceType, err := internal.AskInstanceType(ctx, *_credential.awsConfig, _terraformVarsJSON.AvailabilityZone)
+		if err != nil {
+			return err
+		}
+		_terraformVarsJSON.InstanceType = instanceType.Name
+	}
+	return nil
+}
+
+func inputTerraformVariable(ctx context.Context) error {
+
+	err := inputRegion(ctx)
+	if err != nil {
+		return fmt.Errorf("inputRegion function : %s", err)
+	}
+
+	err = isExistDefaultVpc(ctx)
+	if err != nil {
+		return fmt.Errorf("isExistDefaultVpc function : %s", err)
+	}
+
+	err = inputAvailabilityZone(ctx)
+	if err != nil {
+		return fmt.Errorf("inputAvailabilityZone function: %s", err)
+	}
+
+	err = isExistDefaultSubnet(ctx)
+	if err != nil {
+		return fmt.Errorf("isExistDefaultSubnet function: %s", err)
+	}
+
+	err = inputAmi(ctx)
+	if err != nil {
+		return fmt.Errorf("inputAmi function: %s", err)
+	}
+
+	err = inputInstanceType(ctx)
+	if err != nil {
+		return fmt.Errorf("inputInstanceType function: %s", err)
+	}
+
+	// save tfvars ===============================
+	jsonData := make(map[string]interface{})
+	jsonData["aws_region"] = _terraformVarsJSON.AWSRegion
+	jsonData["ec2_ami"] = _terraformVarsJSON.EC2Ami
+	jsonData["instance_type"] = _terraformVarsJSON.InstanceType
+	jsonData["availability_zone"] = _terraformVarsJSON.AvailabilityZone
+
+	_, err = internal.SaveTerraformVariable(jsonData, _defaultTerraformVars)
+	if err != nil {
+		return err
+	}
+
+	internal.PrintReady("[variable]", _credential.awsConfig.Region, "availability-zone", _terraformVarsJSON.AvailabilityZone)
+	internal.PrintReady("[variable]", _credential.awsConfig.Region, "image-id", _terraformVarsJSON.EC2Ami)
+	internal.PrintReady("[variable]", _credential.awsConfig.Region, "instance-type", _terraformVarsJSON.InstanceType)
+
+	return nil
+}
+
 var (
 	applyCommand = &cobra.Command{
 		Use:   "apply",
@@ -101,77 +281,42 @@ var (
 			ctx := context.Background()
 
 			if _, err := os.Stat(_defaultTerraformVars); err == nil {
-
-				buffer, err := os.ReadFile(_defaultTerraformVars)
+				answer, err := decodeTerraformVarsFile()
 				if err != nil {
 					panicRed(err)
 				}
-				json.NewDecoder(bytes.NewBuffer(buffer)).Decode(&_terraformVarsJSON)
 
-				answer, err := internal.AskNewTfVars(_terraformVarsJSON.AWSRegion, _terraformVarsJSON.AvailabilityZone, _terraformVarsJSON.InstanceType, _terraformVarsJSON.EC2Ami)
-				if err != nil {
-					panicRed(err)
-				}
-				_credential.awsConfig.Region = _terraformVarsJSON.AWSRegion
-
-				if strings.Split(answer, ",")[0] == "No" {
+				if answer == "No" {
 					askRegion, err := internal.AskRegion(ctx, *_credential.awsConfig)
 					if err != nil {
 						panicRed(err)
 					}
 					_credential.awsConfig.Region = askRegion.Name
 
-					defaultVpc, err = internal.ExistsDefaultVpc(ctx, *_credential.awsConfig)
+					err = isExistDefaultVpc(ctx)
 					if err != nil {
 						panicRed(err)
 					}
 
-					if !defaultVpc.Existence {
-						answer, err := internal.AskCreateDefaultVpc()
-						if err != nil {
-							panicRed(err)
-						}
-
-						if answer == "Yes" {
-							vpc, err := internal.CreateDefaultVpc(ctx, *_credential.awsConfig)
-							if err != nil {
-								panicRed(err)
-							}
-							internal.PrintReady("[create-vpc]", _credential.awsConfig.Region, "vpc-id", vpc.Id)
-						} else {
-							os.Exit(1)
-						}
+					err = inputTerraformVariable(ctx)
+					if err != nil {
+						panicRed(err)
 					}
-					scanVariable(ctx)
 				}
 			} else {
-				scanVariable(ctx)
+				err = inputTerraformVariable(ctx)
+				if err != nil {
+					panicRed(err)
+				}
 			}
 
 			if _credential.awsConfig.Region != _terraformVarsJSON.AWSRegion {
 				panicRed(err)
 			}
 
-			defaultVpc, err = internal.ExistsDefaultVpc(ctx, *_credential.awsConfig)
+			err = isExistDefaultVpc(ctx)
 			if err != nil {
 				panicRed(err)
-			}
-
-			if !defaultVpc.Existence {
-				answer, err := internal.AskCreateDefaultVpc()
-				if err != nil {
-					panicRed(err)
-				}
-
-				if answer == "Yes" {
-					vpc, err := internal.CreateDefaultVpc(ctx, *_credential.awsConfig)
-					if err != nil {
-						panicRed(err)
-					}
-					internal.PrintReady("[create-vpc]", _credential.awsConfig.Region, "vpc-id", vpc.Id)
-				} else {
-					os.Exit(1)
-				}
 			}
 
 			// terraform ready [root] =============================================
@@ -191,12 +336,10 @@ var (
 				panicRed(err)
 			}
 			if workSpace.Existence {
-
 				err = findInstance(ctx, r)
 				if err != nil {
 					panicRed(err)
 				}
-
 			} else {
 
 				if err = internal.CreateWorkspace(ctx,
@@ -224,20 +367,22 @@ var (
 			if err != nil {
 				panicRed(err)
 			}
-			internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform-state", "ready")
+			internal.PrintProvisioning("[workspace]", "terraform-state: ", "ready")
+			// internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform-state", "ready")
 
 			// terraform init [workspace] =============================================
 			if err = workSpaceTf.Init(ctx, tfexec.Upgrade(true)); err != nil {
 				panicRed(fmt.Errorf("failed to terraform init"))
 			}
-			internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform init", "success")
+			internal.PrintProvisioning("[workspace]", "terraform-init: ", "success")
+			// internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform init", "success")
 
 			// terraform plan [workspace] =============================================
 			if _, err = workSpaceTf.Plan(ctx, tfexec.VarFile(_defaultTerraformVars)); err != nil {
 				panicRed(fmt.Errorf("failed to terraform plan"))
 			}
-
-			internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform plan", "success")
+			internal.PrintProvisioning("[workspace]", "terraform-plan: ", "success")
+			// internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "[workspace] terraform plan", "success")
 
 			answer, err := internal.AskTerraformExecution("Do You Provision EC2 Instance:")
 			if err != nil {
@@ -267,7 +412,6 @@ var (
 				}
 
 				s.Stop()
-				congratulation := color.New(color.Bold, color.FgHiGreen).PrintFunc()
 				congratulation("🎉 Provisioning Complete! 🎉\n")
 				congratulation(state.Values.Outputs["access_key"].Value)
 
@@ -287,121 +431,6 @@ var (
 		},
 	}
 )
-
-func scanVariable(ctx context.Context) error {
-
-	if _credential.awsConfig.Region == "" {
-		askRegion, err := internal.AskRegion(ctx, *_credential.awsConfig)
-		if err != nil {
-			panicRed(err)
-		}
-		_credential.awsConfig.Region = askRegion.Name
-	}
-	_terraformVarsJSON.AWSRegion = _credential.awsConfig.Region
-
-	defaultVpc, err = internal.ExistsDefaultVpc(ctx, *_credential.awsConfig)
-	if err != nil {
-		panicRed(err)
-	}
-
-	if !defaultVpc.Existence {
-		answer, err := internal.AskCreateDefaultVpc()
-		if err != nil {
-			panicRed(err)
-		}
-
-		if answer == "Yes" {
-			vpc, err := internal.CreateDefaultVpc(ctx, *_credential.awsConfig)
-			if err != nil {
-				panicRed(err)
-			}
-			internal.PrintReady("[create-vpc]", _credential.awsConfig.Region, "vpc-id", vpc.Id)
-		} else {
-			os.Exit(1)
-		}
-	}
-
-	// user inputs Availability Zone value
-	if az == nil {
-		az, err = internal.AskAvailabilityZone(ctx, *_credential.awsConfig)
-		if err != nil {
-			panicRed(err)
-		}
-		_terraformVarsJSON.AvailabilityZone = az.Name
-	}
-	internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "availability-zone", az.Name)
-
-	// If the user hasn't default subnet in availability zone, ask whether create or not
-	defaultSubnet, err = internal.ExistsDefaultSubnet(ctx, *_credential.awsConfig, az.Name)
-	if err != nil {
-		panicRed(fmt.Errorf(`
-		⚠️  [privacy] Direct permission modification is required.
-		1. Aws Console -> IAM -> Account Settings
-		2. Click Activate for the region where you want to create the default VPC.
-				`))
-	}
-
-	if !defaultSubnet.Existence {
-		answer, err := internal.AskCreateDefaultSubnet()
-		if err != nil {
-			if err != nil {
-				panicRed(fmt.Errorf(`
-				⚠️  [privacy] Direct permission modification is required.
-				1. Aws Console -> IAM -> Account Settings
-				2. Click Activate for the region where you want to create the default VPC.
-						`))
-			}
-		}
-
-		if answer == "Yes" {
-			_, err = internal.CreateDefaultSubnet(ctx, *_credential.awsConfig, az.Name)
-			if err != nil {
-				panicRed(fmt.Errorf(`
-				⚠️  [privacy] Direct permission modification is required.
-				1. Aws Console -> IAM -> Account Settings
-				2. Click Activate for the region where you want to create the default VPC.
-						`))
-			}
-		} else {
-			panicRed(fmt.Errorf("invalid default subnet"))
-		}
-	}
-
-	// user inputs Amazon Machine Image
-	if ami == nil {
-		ami, err = internal.AskAmi(ctx, *_credential.awsConfig)
-		if err != nil {
-			panicRed(err)
-		}
-		_terraformVarsJSON.EC2Ami = ami.Name
-	}
-	internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "ami-id", ami.Name)
-
-	// user inputs Instance Type value
-	if ec2Type == nil {
-		// ec2Type, err = internal.AskInstanceType(ctx, *_credential.awsConfig, az.Name)
-		ec2Type, err = internal.AskInstanceType(ctx, *_credential.awsConfig, az.Name)
-		if err != nil {
-			panicRed(err)
-		}
-		_terraformVarsJSON.InstanceType = ec2Type.Name
-	}
-	internal.PrintReady("[start-provisioning]", _credential.awsConfig.Region, "instance-type", ec2Type.Name)
-
-	// save tfvars ===============================
-	jsonData := make(map[string]interface{})
-	jsonData["aws_region"] = _terraformVarsJSON.AWSRegion
-	jsonData["ec2_ami"] = _terraformVarsJSON.EC2Ami
-	jsonData["instance_type"] = _terraformVarsJSON.InstanceType
-	jsonData["availability_zone"] = _terraformVarsJSON.AvailabilityZone
-
-	_, err = internal.SaveTerraformVariable(jsonData, _defaultTerraformVars)
-	if err != nil {
-		panicRed(err)
-	}
-
-	return nil
-}
 
 func init() {
 	rootCmd.AddCommand(applyCommand)

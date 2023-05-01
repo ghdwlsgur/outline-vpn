@@ -79,7 +79,19 @@ func CreateTags(ctx context.Context, cfg aws.Config, id *string, tagName string)
 }
 
 func PrintReady(cmd, region, title, content string) {
-	fmt.Printf("%s region: %s, %s: %s\n", color.GreenString(cmd), color.HiYellowString(region), title, color.HiGreenString(content))
+	fmt.Printf("%s %s %s [%s: %s]\n",
+		color.GreenString(cmd),
+		color.HiBlackString("region:"),
+		color.HiBlackString(region),
+		color.HiBlackString(title),
+		color.HiGreenString(content))
+}
+
+func PrintProvisioning(cmd, title, content string) {
+	fmt.Printf("%s %s %s\n",
+		color.HiMagentaString(cmd),
+		color.HiBlackString(title),
+		color.HiGreenString(content))
 }
 
 func AskPrompt(Message, AnswerOne, AnswerTwo string) (string, error) {
