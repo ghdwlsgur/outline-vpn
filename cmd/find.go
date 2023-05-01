@@ -23,17 +23,27 @@ var (
 			defer cancel()
 
 			s := spinner.New(spinner.CharSets[8], 100*time.Millisecond)
-			s.UpdateCharSet(spinner.CharSets[59])
+			s.UpdateCharSet(spinner.CharSets[39])
 			s.Color("fgHiGreen")
 			s.Restart()
-			s.Prefix = color.HiGreenString("Finding EC2 Instance ")
+			s.Prefix = color.HiGreenString("Searching for EC2 instances with the tag 'govpn-ec2' ")
 
 			regionList, err := internal.FindTagInstance(ctx, *_credential.awsConfig)
 			if err != nil {
 				panicRed(err)
 			}
 			s.Stop()
-			fmt.Println(regionList)
+
+			var result string
+			if len(regionList) == 0 {
+				fmt.Printf(color.HiRedString("No instances created with govpn cli were found.\n"))
+			} else {
+				for _, region := range regionList {
+					f := fmt.Sprintf(" %s", region)
+					result += f
+				}
+				fmt.Printf("%s%s\n", "There exists an instance on", color.HiGreenString(result))
+			}
 
 			go func() {
 				cancel()
