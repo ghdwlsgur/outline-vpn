@@ -136,9 +136,13 @@ $ outline-vpn create -r us-east-1
 $ outline-vpn create -r ap-northeast-2
 ```
 
+[![asciicast](https://asciinema.org/a/oxEkepkL4Xcx1hkENCNblSHML.svg)](https://asciinema.org/a/oxEkepkL4Xcx1hkENCNblSHML)
+
 > After executing the `outline-vpn create` command, register the received access key on the Outline Client App and connect.
 
-[![asciicast](https://asciinema.org/a/oxEkepkL4Xcx1hkENCNblSHML.svg)](https://asciinema.org/a/oxEkepkL4Xcx1hkENCNblSHML)
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/77400522/233247000-183c129a-f4fb-4580-97d9-3cc6d6438b99.jpeg" />
+</p>
 
 ### destroy
 
@@ -154,9 +158,7 @@ $ outline-vpn destroy -r us-east-1
 $ outline-vpn destroy -r ap-northeast-2
 ```
 
-<p align="center">
- <img src="https://user-images.githubusercontent.com/77400522/236384764-ecc410ea-930e-4dfa-9cff-62e3f5472e38.png" />
-</p>
+[![asciicast](https://asciinema.org/a/LrA8FQAa2BMtOjMd0qnohPcKE.svg)](https://asciinema.org/a/LrA8FQAa2BMtOjMd0qnohPcKE)
 
 ### find
 
