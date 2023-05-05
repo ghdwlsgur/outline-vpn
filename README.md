@@ -163,16 +163,10 @@ $ outline-vpn destroy -r ap-northeast-2
 > Find instances created using the outlinevpn CLI tool.
 
 ```bash
-$ govpn find
+$ outline-vpn find
 ```
 
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/77400522/236385450-36c78250-23be-410c-b352-3c802922e55b.png" />
-</p>
-
-<p align="center">
-  <img src="https://user-images.githubusercontent.com/77400522/236385538-1382e062-ac87-41cc-8d94-d2c4d9455ac3.png" />
-</p>
+[![asciicast](https://asciinema.org/a/USv00kO8N37VCVMo99vzqKOzA.svg)](https://asciinema.org/a/USv00kO8N37VCVMo99vzqKOzA)
 
 # Trouble Shooting
 
