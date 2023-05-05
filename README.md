@@ -138,9 +138,7 @@ $ outline-vpn create -r ap-northeast-2
 
 > After executing the `outline-vpn create` command, register the received access key on the Outline Client App and connect.
 
-<p align="center">
- <img src="https://user-images.githubusercontent.com/77400522/236384565-e86bde42-7d9d-4c50-a613-be773d7d315b.png" />
-</p>
+[![asciicast](https://asciinema.org/a/oxEkepkL4Xcx1hkENCNblSHML.svg)](https://asciinema.org/a/oxEkepkL4Xcx1hkENCNblSHML)
 
 ### destroy
 
