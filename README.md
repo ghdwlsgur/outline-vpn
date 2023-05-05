@@ -5,7 +5,7 @@
 <br>
 <br>
 
-### GoVPN
+### Outline-VPN
 
 > It can help you quickly provision a Shadowsocks-based VPN server on an AWS EC2 instance and assist you in using [Outline VPN](https://getoutline.org/) to use the VPN.
 
@@ -110,40 +110,36 @@ Provisioning speed may vary depending on instance type.
 ```bash
 # [install]
 
-brew tap ghdwlsgur/govpn
-brew install govpn
+brew tap ghdwlsgur/outline-vpn
+brew install outline-vpn
 
 # [upgrade]
 
-brew upgrade govpn
+brew upgrade outline-vpn
 ```
 
-### [Download](https://github.com/ghdwlsgur/govpn/releases)
+### [Download](https://github.com/ghdwlsgur/outline-vpn/releases)
 
 # How to use (command)
 
-### apply
+### create
 
 > Create a VPN server
 
 ```bash
-$ govpn apply
+$ outline-vpn create
 
 # Provision EC2 in the us-east-1 region.
-$ govpn apply -r us-east-1
+$ outline-vpn create -r us-east-1
 
 # Provision EC2 in the ap-northeast-2 region.
-$ govpn destroy -r ap-northeast-2
+$ outline-vpn create -r ap-northeast-2
 ```
 
-<p align="center">
- <img src="https://user-images.githubusercontent.com/77400522/233245618-a4f51498-d46f-40fa-afb2-75b15faca059.png" />
-</p>
-
-> After executing the `govpn apply` command, register the received access key on the Outline Client App and connect.
+> After executing the `outline-vpn create` command, register the received access key on the Outline Client App and connect.
 
 <p align="center">
- <img src="https://user-images.githubusercontent.com/77400522/233247000-183c129a-f4fb-4580-97d9-3cc6d6438b99.jpeg" />
+ <img src="https://user-images.githubusercontent.com/77400522/236384565-e86bde42-7d9d-4c50-a613-be773d7d315b.png" />
 </p>
 
 ### destroy
@@ -151,17 +147,33 @@ $ govpn destroy -r ap-northeast-2
 > Delete a VPN server
 
 ```bash
-$ govpn destroy
+$ outline-vpn destroy
 
 # Terminate EC2 in the us-east-1 region.
-$ govpn destroy -r us-east-1
+$ outline-vpn destroy -r us-east-1
 
 # Terminate EC2 in the ap-northeast-2 region.
-$ govpn destroy -r ap-northeast-2
+$ outline-vpn destroy -r ap-northeast-2
 ```
 
 <p align="center">
- <img src="https://user-images.githubusercontent.com/77400522/233246472-a5d3f164-49aa-402e-afd5-a444bf649a58.png" />
+ <img src="https://user-images.githubusercontent.com/77400522/236384764-ecc410ea-930e-4dfa-9cff-62e3f5472e38.png" />
+</p>
+
+### find
+
+> Find instances created using the outlinevpn CLI tool.
+
+```bash
+$ govpn find
+```
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/77400522/236385450-36c78250-23be-410c-b352-3c802922e55b.png" />
+</p>
+
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/77400522/236385538-1382e062-ac87-41cc-8d94-d2c4d9455ac3.png" />
 </p>
 
 # Trouble Shooting
@@ -178,4 +190,4 @@ m1-terraform-provider-helper install hashicorp/template -v v2.2.0
 
 # License
 
-GoVPN is licensed under the [MIT](https://github.com/ghdwlsgur/govpn/blob/master/LICENSE)
+GoVPN is licensed under the [MIT](https://github.com/ghdwlsgur/outline-vpn/blob/master/LICENSE)
