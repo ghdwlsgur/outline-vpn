@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/fatih/color"
-	"github.com/ghdwlsgur/govpn/internal"
+	"github.com/ghdwlsgur/outline-vpn/internal"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	git "gopkg.in/src-d/go-git.v4"
@@ -25,9 +25,9 @@ const (
 )
 
 var (
-	// /opt/homebrew/lib/govpn
+	// /opt/homebrew/lib/outline-vpn
 	path = func() string {
-		path := which.Which("govpn")
+		path := which.Which("outline-vpn")
 		path = strings.Replace(path, "bin", "lib", -1)
 		return path
 	}()
@@ -41,8 +41,8 @@ var (
 	}(path, "/govpn-terraform/terraform.tfvars.json")
 
 	rootCmd = &cobra.Command{
-		Use:   "govpn",
-		Short: `govpn is interactive CLI tool to quickly provision a cloud server to use Outline VPN`,
+		Use:   "outline-vpn",
+		Short: `outline-vpn is interactive CLI tool to quickly provision a cloud server to use Outline VPN`,
 		Long:  `After the user selects an machine image, instance type, region, and availability zone, an EC2 is created in the default subnet within the selected availability zone in the default vpc. If you don't have a default vpc or default subnet, we'll help you create defulat vpc or default subnet. You can create one EC2 instance for each region. You can use the vpn service by pasting access key on the Outline Client App.`,
 	}
 
@@ -147,7 +147,7 @@ func findSharedCredFile() {
 		cred, err := awsConfig.Credentials.Retrieve(context.Background())
 
 		if err != nil || cred.Expired() || cred.AccessKeyID == "" || cred.SecretAccessKey == "" {
-			color.Yellow("[Expire] govpn default mfa credential file %s", sharedCredFile)
+			color.Yellow("[Expire] outline-vpn default mfa credential file %s", sharedCredFile)
 			os.Unsetenv("AWS_SHARED_CREDENTIALS_FILE")
 		} else {
 			_credential.awsConfig = &awsConfig

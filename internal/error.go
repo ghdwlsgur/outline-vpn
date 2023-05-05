@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/ghdwlsgur/govpn/wraperror"
+	"github.com/ghdwlsgur/outline-vpn/wraperror"
 )
 
 var (

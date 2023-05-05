@@ -4,7 +4,7 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - binary: govpn
+  - binary: outline-vpn
     goos:
       - windows
       - darwin
@@ -22,7 +22,7 @@ builds:
       - all=-trimpath={{.Env.GOPATH}}
     ldflags:
       - -s -w
-      - -X main.govpnVersion=v0.1.1
+      - -X main.outline-vpnVersion=v0.1.1
     ignore:
       - goos: windows
         goarch: arm64
@@ -46,16 +46,16 @@ changelog:
 release:
   github:
     owner: ghdwlsgur
-    name: govpn
+    name: outline-vpn
 brews:
-  - name: govpn
+  - name: outline-vpn
     tap:
       owner: ghdwlsgur
-      name: homebrew-govpn
+      name: homebrew-outline-vpn
     commit_author:
       name: ghdwlsgur
       email: vjinhyeokv@gmail.com
-    description: "govpn helps you easily and quickly provision EC2 with terraform and consume vpn service on your mobile or computer via outline application."
+    description: "outline-vpn helps you easily and quickly provision EC2 with terraform and consume vpn service on your mobile or computer via outline application."
 # modelines, feel free to remove those if you don't want/use them:
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj

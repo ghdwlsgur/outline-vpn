@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/ghdwlsgur/govpn/cmd"
+	"github.com/ghdwlsgur/outline-vpn/cmd"
 )
 
 func main() {
-	cmd.Execute("1.0.7")
+	cmd.Execute("1.0.8")
 }

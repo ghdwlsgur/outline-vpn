@@ -11,7 +11,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
-	"github.com/ghdwlsgur/govpn/internal"
+	"github.com/ghdwlsgur/outline-vpn/internal"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/spf13/cobra"
 )
@@ -274,7 +274,7 @@ func inputTerraformVariable(ctx context.Context) error {
 
 var (
 	applyCommand = &cobra.Command{
-		Use:   "apply",
+		Use:   "create",
 		Short: "Create an instance that can be used as an outline VPN server and all its resources.",
 		Long:  "Create an instance that can be used as an outline VPN server and all its resources.",
 		Run: func(_ *cobra.Command, _ []string) {

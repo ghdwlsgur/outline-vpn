@@ -7,7 +7,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
-	"github.com/ghdwlsgur/govpn/internal"
+	"github.com/ghdwlsgur/outline-vpn/internal"
 	"github.com/spf13/cobra"
 )
 

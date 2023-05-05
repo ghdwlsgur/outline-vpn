@@ -1,4 +1,4 @@
-module github.com/ghdwlsgur/govpn
+module github.com/ghdwlsgur/outline-vpn
 
 go 1.19
 
