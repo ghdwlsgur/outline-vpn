@@ -167,7 +167,6 @@ func findRegion(awsRegion string) {
 		}
 		_credential.awsConfig.Region = region.Name
 	}
-	color.Green("region \t\t\t(%s)\n", _credential.awsConfig.Region)
 }
 
 func setTempConfig(awsRegion string, subcmd *cobra.Command) (string, aws.Config) {
