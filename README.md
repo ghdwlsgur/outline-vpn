@@ -13,9 +13,9 @@
 
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/ghdwlsgur/outline-vpn?color=success&label=version&sort=semver)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ghdwlsgur/outline-vpn)](https://goreportcard.com/report/github.com/ghdwlsgur/outline-vpn)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/31be448d2ace4634a1dfe7ce2d083036)](https://www.codacy.com/gh/ghdwlsgur/govpn/dashboard?utm_source=github.com&utm_medium=referral&utm_content=ghdwlsgur/outline-vpn&utm_campaign=Badge_Grade)
-[![Maintainability](https://api.codeclimate.com/v1/badges/6d14b66ab49c8d4b64c0/maintainability)](https://codeclimate.com/github/ghdwlsgur/outline-vpn/maintainability)
-[![circle ci](https://circleci.com/gh/ghdwlsgur/govpn.svg?style=svg)](https://circleci.com/gh/ghdwlsgur/outline-vpn)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/31be448d2ace4634a1dfe7ce2d083036)](https://app.codacy.com/gh/ghdwlsgur/outline-vpn/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+[![Maintainability](https://api.codeclimate.com/v1/badges/17876648f5ca0ec21416/maintainability)](https://codeclimate.com/github/ghdwlsgur/outline-vpn/maintainability)
+[![circle ci](https://circleci.com/gh/ghdwlsgur/outline-vpn.svg?style=svg)](https://circleci.com/gh/ghdwlsgur/outline-vpn)
 
 </div>
 
