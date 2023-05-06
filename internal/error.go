@@ -1,8 +1,3 @@
-/*
-Copyright © 2020 gjbae1212
-Released under the MIT license.
-(https://github.com/gjbae1212/gossm)
-*/
 package internal
 
 import (
