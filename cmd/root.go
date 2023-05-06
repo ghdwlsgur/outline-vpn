@@ -103,11 +103,11 @@ func gitInit() {
 			panicRed(err)
 		}
 		err = worktree.Pull(&git.PullOptions{RemoteName: "origin"})
-		if err != nil {
-			fmt.Println(color.GreenString("govpn-terraform \t(%s)", err.Error()))
-		} else {
-			fmt.Println(color.GreenString("govpn-terraform \t(%s)", "pull complete"))
-		}
+		// if err != nil {
+		// 	fmt.Println(color.GreenString("govpn-terraform \t(%s)", err.Error()))
+		// } else {
+		// 	fmt.Println(color.GreenString("govpn-terraform \t(%s)", "pull complete"))
+		// }
 	}
 }
 
@@ -128,7 +128,7 @@ func findSharedCredFile() {
 	sharedCredFile := os.Getenv("AWS_SHARED_CREDENTIALS_FILE")
 	if sharedCredFile == "" {
 		if _, err := os.Stat(_credentialWithMFA); !os.IsNotExist(err) {
-			color.Yellow("[Use] gossm default mfa credential file %s", _credentialWithMFA)
+			color.Yellow("[Use] outline-vpn default mfa credential file %s", _credentialWithMFA)
 			os.Setenv("AWS_SHARED_CREDENTIALS_FILE", _credentialWithMFA)
 			sharedCredFile = _credentialWithMFA
 		}
@@ -269,9 +269,10 @@ func libPrerequisite(libList []string) {
 	for _, lib := range libList {
 		if err = libraryCheck(lib); err != nil {
 			panicRed(fmt.Errorf("⚠️  %s is not installed\n[required] jq, rsync and terraform must be installed as prerequisites.", lib))
-		} else {
-			PrintFunc(lib, "ready")
 		}
+		// else {
+		// 	PrintFunc(lib, "ready")
+		// }
 	}
 	fmt.Println()
 }
