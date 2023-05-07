@@ -4,14 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/fatih/color"
 	"github.com/ghdwlsgur/outline-vpn/internal"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	git "gopkg.in/src-d/go-git.v4"
@@ -62,8 +65,10 @@ type TerraformVarsJSON struct {
 }
 
 type Credential struct {
-	awsProfile string
-	awsConfig  *aws.Config
+	awsProfile    string
+	awsConfig     *aws.Config
+	homePath      string
+	ssmPluginPath string
 }
 
 func Execute(version string) {
@@ -285,6 +290,43 @@ func PrintFunc(field, value string) {
 	}
 }
 
+func setUpPlugin() {
+	home, err := homedir.Dir()
+	if err != nil {
+		panicRed(internal.WrapError(err))
+	}
+
+	_credential.homePath = filepath.Join(home, ".outline-vpn")
+	if _, err := os.Stat(_credential.homePath); os.IsNotExist(err) {
+		if err := os.MkdirAll(_credential.homePath, os.ModePerm); err != nil {
+			panicRed(internal.WrapError(err))
+		}
+	}
+
+	plugin, err := internal.GetSSMPlugin()
+	if err != nil {
+		panicRed(internal.WrapError(err))
+	}
+
+	_credential.ssmPluginPath = filepath.Join(_credential.homePath,
+		internal.GetSSMPluginName())
+	if info, err := os.Stat(_credential.ssmPluginPath); os.IsNotExist(err) {
+		color.Green("[create] aws ssm plugin")
+		if err := ioutil.WriteFile(_credential.ssmPluginPath, plugin, 0755); err != nil {
+			panicRed(internal.WrapError(err))
+		}
+	} else if err != nil {
+		panicRed(internal.WrapError(err))
+	} else {
+		if int(info.Size()) != len(plugin) {
+			color.Green("[update] aws ssm plugin")
+			if err := ioutil.WriteFile(_credential.ssmPluginPath, plugin, 0755); err != nil {
+				panicRed(internal.WrapError(err))
+			}
+		}
+	}
+}
+
 func initConfig() {
 
 	_credential = &Credential{}
@@ -292,6 +334,7 @@ func initConfig() {
 
 	findProfile()
 	findSharedCredFile()
+	setUpPlugin()
 
 	args := os.Args[1:]
 	subcmd, _, err := rootCmd.Find(args)
