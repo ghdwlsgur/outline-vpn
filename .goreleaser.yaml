@@ -1,5 +1,3 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
-# Make sure to check the documentation at https://goreleaser.com
 before:
   hooks:
     - go mod tidy
@@ -22,7 +20,7 @@ builds:
       - all=-trimpath={{.Env.GOPATH}}
     ldflags:
       - -s -w
-      - -X main.outline-vpnVersion=v0.1.1
+      - -X main.outline-vpnVersion=v1.0.11
     ignore:
       - goos: windows
         goarch: arm64
@@ -56,6 +54,3 @@ brews:
       name: ghdwlsgur
       email: vjinhyeokv@gmail.com
     description: "outline-vpn helps you easily and quickly provision EC2 with terraform and consume vpn service on your mobile or computer via outline application."
-# modelines, feel free to remove those if you don't want/use them:
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-# vim: set ts=2 sw=2 tw=0 fo=cnqoj
