@@ -41,13 +41,40 @@ type (
 	}
 
 	EC2 struct {
-		Existence    bool
-		Id           string
-		PublicIP     string
-		LaunchTime   time.Time
-		InstanceType string
+		Existence     bool
+		Id            string
+		PublicIP      string
+		LaunchTime    time.Time
+		InstanceType  string
+		Region        string
+		PublicDomain  string
+		PrivateDomain string
 	}
 )
+
+func (ec2 *EC2) GetID() string {
+	return ec2.Id
+}
+
+func (ec2 *EC2) GetPublicIP() string {
+	return ec2.PublicIP
+}
+
+func (ec2 *EC2) GetRegion() string {
+	return ec2.Region
+}
+
+func (ec2 *EC2) GetInstanceType() string {
+	return ec2.InstanceType
+}
+
+func (ec2 *EC2) GetPublicDomain() string {
+	return ec2.PublicDomain
+}
+
+func (ec2 *EC2) GetPrivateDomain() string {
+	return ec2.PrivateDomain
+}
 
 func CheckOutlineConnect(instance *EC2) (bool, error) {
 
@@ -91,7 +118,9 @@ func SaveTerraformVariable(jsonData map[string]interface{}, jsonFilePath string)
 }
 
 func FindSpecificTagInstance(ctx context.Context, cfg aws.Config, region string) (*EC2, error) {
+	cfg.Region = region
 	client := ec2.NewFromConfig(cfg)
+
 	defaultInstanceTagName = fmt.Sprintf("govpn-ec2-%s", region)
 
 	output, err := client.DescribeInstances(ctx,
@@ -110,11 +139,14 @@ func FindSpecificTagInstance(ctx context.Context, cfg aws.Config, region string)
 		for _, reservations := range output.Reservations {
 			for _, ec2 := range reservations.Instances {
 				return &EC2{
-					Existence:    true,
-					Id:           aws.ToString(ec2.InstanceId),
-					PublicIP:     aws.ToString(ec2.PublicIpAddress),
-					LaunchTime:   aws.ToTime(ec2.LaunchTime),
-					InstanceType: aws.ToString((*string)(&ec2.InstanceType)),
+					Existence:     true,
+					Id:            aws.ToString(ec2.InstanceId),
+					PublicIP:      aws.ToString(ec2.PublicIpAddress),
+					LaunchTime:    aws.ToTime(ec2.LaunchTime),
+					InstanceType:  aws.ToString((*string)(&ec2.InstanceType)),
+					PublicDomain:  aws.ToString(ec2.PublicDnsName),
+					PrivateDomain: aws.ToString(ec2.PrivateDnsName),
+					Region:        cfg.Region,
 				}, nil
 			}
 		}
@@ -166,47 +198,9 @@ func FindTagInstance(ctx context.Context, cfg aws.Config) ([]string, error) {
 
 		if len(output.Reservations) > 0 {
 			runningRegions = append(runningRegions, region)
-			// for _, reservations := range output.Reservations {
-
-			// for _, ec2 := range reservations.Instances {
-
-			// return &EC2{
-			// 	Existence:    true,
-			// 	Id:           aws.ToString(ec2.InstanceId),
-			// 	PublicIP:     aws.ToString(ec2.PublicIpAddress),
-			// 	LaunchTime:   aws.ToTime(ec2.LaunchTime),
-			// 	InstanceType: aws.ToString((*string)(&ec2.InstanceType)),
-			// }, nil
-			// }
-			// }
 		}
 	}
 
-	// output, err := client.DescribeInstances(ctx,
-	// 	&ec2.DescribeInstancesInput{
-	// 		Filters: []ec2_types.Filter{
-	// 			{Name: aws.String("instance-state-name"), Values: []string{"running"}},
-	// 			{Name: aws.String("tag:Name"), Values: []string{defaultInstanceTagName}},
-	// 		},
-	// 	},
-	// )
-	// if err != nil {
-	// 	return &EC2{}, err
-	// }
-
-	// if len(output.Reservations) > 0 {
-	// 	for _, reservations := range output.Reservations {
-	// 		for _, ec2 := range reservations.Instances {
-	// 			return &EC2{
-	// 				Existence:    true,
-	// 				Id:           aws.ToString(ec2.InstanceId),
-	// 				PublicIP:     aws.ToString(ec2.PublicIpAddress),
-	// 				LaunchTime:   aws.ToTime(ec2.LaunchTime),
-	// 				InstanceType: aws.ToString((*string)(&ec2.InstanceType)),
-	// 			}, nil
-	// 		}
-	// 	}
-	// }
 	return runningRegions, nil
 }
 
@@ -294,18 +288,12 @@ func AskInstanceType(ctx context.Context, cfg aws.Config, az string) (*InstanceT
 	}
 	sort.Strings(instanceTypes)
 
-	var ec2Type string
-	prompt := &survey.Select{
-		Message: "Choose a EC2 Instance Type in AWS:",
-		Options: instanceTypes,
-	}
-	if err := survey.AskOne(prompt, &ec2Type, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.SelectFocus.Format = "green+hb"
-	}), survey.WithPageSize(20)); err != nil {
+	answer, err := AskPromptOptionList("Choose a EC2 Instance Type in AWS:", instanceTypes, 10)
+	if err != nil {
 		return nil, err
 	}
 
-	return &InstanceType{Name: ec2Type}, nil
+	return &InstanceType{Name: answer}, nil
 }
 
 func AskAvailabilityZone(ctx context.Context, cfg aws.Config) (*AvailabilityZone, error) {
@@ -331,18 +319,14 @@ func AskAvailabilityZone(ctx context.Context, cfg aws.Config) (*AvailabilityZone
 
 	sort.Strings(availabilityZones)
 
-	var az string
-	prompt := &survey.Select{
-		Message: fmt.Sprintf("Choose a Availability Zone in %s", cfg.Region),
-		Options: availabilityZones,
-	}
-	if err := survey.AskOne(prompt, &az, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.SelectFocus.Format = "green+hb"
-	}), survey.WithPageSize(20)); err != nil {
+	answer, err := AskPromptOptionList(fmt.Sprintf("Choose a Availability Zone in %s:", cfg.Region),
+		availabilityZones,
+		len(availabilityZones))
+	if err != nil {
 		return nil, err
 	}
 
-	return &AvailabilityZone{Name: az}, nil
+	return &AvailabilityZone{Name: answer}, nil
 }
 
 func AskAmi(ctx context.Context, cfg aws.Config) (*Ami, error) {
@@ -399,16 +383,10 @@ func AskAmi(ctx context.Context, cfg aws.Config) (*Ami, error) {
 		return nil, fmt.Errorf("not found Amazon Machine Image")
 	}
 
-	prompt := &survey.Select{
-		Message: "Choose a Amazon Machine Image in AWS:",
-		Options: amis,
-	}
-
-	selectKey := ""
-	if err := survey.AskOne(prompt, &selectKey, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.SelectFocus.Format = "green+hb"
-	}), survey.WithPageSize(20)); err != nil {
+	answer, err := AskPromptOptionList("Choose a Amazon Machine Image in AWS:", amis, 10)
+	if err != nil {
 		return nil, err
 	}
-	return table[selectKey], nil
+
+	return table[answer], nil
 }

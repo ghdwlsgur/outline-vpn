@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/hc-install/product"
 	"github.com/hashicorp/hc-install/releases"
@@ -24,22 +23,6 @@ type (
 		Path      string
 	}
 )
-
-func AskTerraformExecution(Message string) (string, error) {
-	prompt := &survey.Select{
-		Message: Message,
-		Options: []string{"Yes", "No (exit)"},
-	}
-
-	answer := ""
-	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.SelectFocus.Format = "green+hb"
-	}), survey.WithPageSize(2)); err != nil {
-		return "No", err
-	}
-
-	return answer, nil
-}
 
 func TerraformReady(ctx context.Context, ver string) (string, error) {
 	installer := &releases.ExactVersion{

@@ -266,19 +266,12 @@ func AskRegion(ctx context.Context, cfg aws.Config) (*Region, error) {
 	}
 	sort.Strings(regions)
 
-	var region string
-	prompt := &survey.Select{
-		Message: "Choose a region in AWS:",
-		Options: regions,
-	}
-
-	if err := survey.AskOne(prompt, &region, survey.WithIcons(func(icons *survey.IconSet) {
-		icons.SelectFocus.Format = "green+hb"
-	}), survey.WithPageSize(20)); err != nil {
+	answer, err := AskPromptOptionList("Choose a region in AWS:", regions, len(regions))
+	if err != nil {
 		return nil, err
 	}
 
-	return &Region{Name: region}, nil
+	return &Region{Name: answer}, nil
 }
 
 func CreateTags(ctx context.Context, cfg aws.Config, id *string, tagName string) error {
@@ -320,6 +313,38 @@ func AskPrompt(Message, AnswerOne, AnswerTwo string) (string, error) {
 	prompt := &survey.Select{
 		Message: Message,
 		Options: []string{AnswerOne, AnswerTwo},
+	}
+
+	answer := ""
+	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
+		icons.SelectFocus.Format = "green+hb"
+	}), survey.WithPageSize(2)); err != nil {
+		return "No", err
+	}
+
+	return answer, nil
+}
+
+func AskPromptOptionList(Message string, Options []string, size int) (string, error) {
+	prompt := &survey.Select{
+		Message: Message,
+		Options: Options,
+	}
+
+	answer := ""
+	if err := survey.AskOne(prompt, &answer, survey.WithIcons(func(icons *survey.IconSet) {
+		icons.SelectFocus.Format = "green+hb"
+	}), survey.WithPageSize(size)); err != nil {
+		return "No", err
+	}
+
+	return answer, nil
+}
+
+func AskTerraformExecution(Message string) (string, error) {
+	prompt := &survey.Select{
+		Message: Message,
+		Options: []string{"Yes", "No (exit)"},
 	}
 
 	answer := ""

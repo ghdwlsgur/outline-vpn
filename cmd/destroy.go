@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -57,6 +58,37 @@ func deleteTagVPC(ctx context.Context) error {
 	return nil
 }
 
+func returnWorkspaceFileList() ([]string, error) {
+	var fileList []string
+
+	rootDir := _defaultTerraformPath + "/terraform.tfstate.d/"
+	f, err := os.ReadDir(rootDir)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(f) > 0 {
+		for _, file := range f {
+			region := file.Name()
+			subDir := rootDir + region
+			f, err := os.ReadDir(subDir)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(f) > 0 {
+				for _, file := range f {
+					if file.Name() == "outline.json" {
+						fileList = append(fileList, region)
+					}
+				}
+			}
+		}
+	}
+
+	return fileList, nil
+}
+
 var (
 	destroyCommand = &cobra.Command{
 		Use:   "destroy",
@@ -65,13 +97,45 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			var (
 				instance *internal.EC2
+				table    = make(map[string]*internal.EC2)
 			)
 
 			ctx := context.Background()
 
-			instance, err = internal.FindSpecificTagInstance(ctx, *_credential.awsConfig, _credential.awsConfig.Region)
+			fileList, err := returnWorkspaceFileList()
 			if err != nil {
 				panicRed(err)
+			}
+
+			if len(fileList) > 0 {
+				for _, regionName := range fileList {
+					instance, err = internal.FindSpecificTagInstance(ctx, *_credential.awsConfig, regionName)
+					if err != nil {
+						panicRed(err)
+					}
+
+					tableKey := fmt.Sprintf("[id: %s public-ip: %s type: %s] region: %s",
+						instance.GetID(),
+						instance.GetPublicIP(),
+						instance.GetInstanceType(),
+						instance.GetRegion())
+					table[tableKey] = instance
+				}
+
+				var option []string
+				for key := range table {
+					option = append(option, key)
+				}
+
+				answer, err := internal.AskPromptOptionList("Please select the instance to remove", option, len(option))
+				if err != nil {
+					panicRed(err)
+				}
+
+				instance = table[answer]
+			} else {
+				notice("There are no instances with the tag 'govpn-ec2' available in all regions.\n")
+				os.Exit(1)
 			}
 
 			if instance.Existence {
@@ -96,7 +160,7 @@ var (
 					s.Restart()
 					s.Prefix = color.HiRedString("EC2 Destroying ")
 
-					workSpace.Path = _defaultTerraformPath + "/terraform.tfstate.d/" + _credential.awsConfig.Region
+					workSpace.Path = _defaultTerraformPath + "/terraform.tfstate.d/" + instance.GetRegion()
 
 					// terraform ready [workspace] =============================================
 					workSpaceExecPath, err := internal.TerraformReady(ctx, terraformVersion)
@@ -132,7 +196,7 @@ var (
 					}
 
 					// terraform workspace delete [root] =============================================
-					err = rootTf.WorkspaceDelete(ctx, _credential.awsConfig.Region)
+					err = rootTf.WorkspaceDelete(ctx, instance.GetRegion())
 					if err != nil {
 						panicRed(err)
 					}
@@ -157,8 +221,6 @@ var (
 					}
 
 				}
-			} else {
-				notice("You haven't EC2 [govpn-ec2-%s]\n", _credential.awsConfig.Region)
 			}
 
 			if internal.ExistsKeyPair() {
@@ -168,7 +230,7 @@ var (
 				}
 			}
 
-			err := deleteTagSubnet(ctx)
+			err = deleteTagSubnet(ctx)
 			if err != nil {
 				panicRed(err)
 			}
