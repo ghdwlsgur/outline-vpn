@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2_types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/fatih/color"
+	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 const (
@@ -52,6 +53,13 @@ type (
 	}
 )
 
+type DetectVariable struct {
+	Region           string
+	AvailabilityZone string
+	InstanceType     string
+	Ami              string
+}
+
 func (ec2 *EC2) GetID() string {
 	return ec2.Id
 }
@@ -62,6 +70,10 @@ func (ec2 *EC2) GetPublicIP() string {
 
 func (ec2 *EC2) GetRegion() string {
 	return ec2.Region
+}
+
+func (ec2 *EC2) GetLaunchTime() string {
+	return ec2.LaunchTime.String()
 }
 
 func (ec2 *EC2) GetInstanceType() string {
@@ -207,7 +219,26 @@ func FindTagInstance(ctx context.Context, cfg aws.Config) ([]string, error) {
 func AskNewTfVars(region, az, instanceType, ami string) (string, error) {
 
 	notice := color.New(color.Bold, color.FgHiCyan).PrintfFunc()
-	notice("[detect tfvars file]==================================\n\nRegion:\t\t\t%s\nAvailability Zone:\t%s\nInstance Type:\t\t%s\nAMI:\t\t\t%s\n\n======================================================\n\n", region, az, instanceType, ami)
+	notice("detect file [terraform.tfvars.json]\n")
+
+	content := []DetectVariable{
+		{region, az, instanceType, ami},
+	}
+
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Region", "Availability Zone", "Instance Type", "AMI"})
+
+	for _, v := range content {
+		t.AppendRow(table.Row{
+			v.Region,
+			v.AvailabilityZone,
+			v.InstanceType,
+			v.Ami,
+		})
+	}
+
+	t.Render()
 
 	prompt := &survey.Select{
 		Message: "Do you want to proceed as above:",

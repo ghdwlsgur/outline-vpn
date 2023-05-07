@@ -3,11 +3,13 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	"github.com/ghdwlsgur/outline-vpn/internal"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 )
 
@@ -17,6 +19,10 @@ var (
 		Short: "Find instances with the tag [govpn-ec2] in all available regions.",
 		Long:  "Find instances with the tag [govpn-ec2] in all available regions.",
 		Run: func(_ *cobra.Command, _ []string) {
+			var (
+				ec2Table = make(map[string]*internal.EC2)
+			)
+
 			ctx := context.Background()
 
 			ctx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -42,6 +48,30 @@ var (
 					f := fmt.Sprintf(" %s", region)
 					result += f
 				}
+
+				for _, region := range regionList {
+					instance, err = internal.FindSpecificTagInstance(ctx, *_credential.awsConfig, region)
+					if err != nil {
+						panicRed(err)
+					}
+					ec2Table[region] = instance
+				}
+
+				t := table.NewWriter()
+				t.SetOutputMirror(os.Stdout)
+
+				t.AppendHeader(table.Row{"ID", "Public IP", "Launch Time", "Instance Type", "Region"})
+				for region := range ec2Table {
+					t.AppendRow(table.Row{
+						ec2Table[region].GetID(),
+						ec2Table[region].GetPublicIP(),
+						ec2Table[region].GetLaunchTime(),
+						ec2Table[region].GetInstanceType(),
+						ec2Table[region].GetRegion(),
+					})
+				}
+
+				t.Render()
 				fmt.Printf("%s%s\n", "There exists an instance on", color.HiGreenString(result))
 			}
 
