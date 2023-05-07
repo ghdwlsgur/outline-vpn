@@ -24,6 +24,7 @@ require (
 )
 
 require (
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.36.4
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	golang.org/x/crypto v0.8.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
@@ -58,7 +59,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.7 // indirect
