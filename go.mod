@@ -24,10 +24,16 @@ require (
 )
 
 require (
+	github.com/jedib0t/go-pretty/v6 v6.4.6
+	github.com/mattn/go-runewidth v0.0.14 // indirect
+	github.com/rivo/uniseg v0.4.4 // indirect
+)
+
+require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.36.4
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	golang.org/x/crypto v0.8.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 )
 
 require (
