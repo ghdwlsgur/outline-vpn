@@ -13,7 +13,7 @@ require (
 	github.com/fatih/color v1.15.0
 	github.com/hairyhenderson/go-which v0.2.0
 	github.com/hashicorp/go-version v1.6.0
-	github.com/hashicorp/hc-install v0.5.1
+	github.com/hashicorp/hc-install v0.5.2
 	github.com/hashicorp/hcl/v2 v2.16.2
 	github.com/hashicorp/terraform-exec v0.18.1
 	github.com/spf13/cobra v1.7.0
@@ -21,6 +21,11 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/zclconf/go-cty v1.13.1
 	gopkg.in/src-d/go-git.v4 v4.13.1
+)
+
+require (
+	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
+	github.com/cloudflare/circl v1.3.3 // indirect
 )
 
 require (
@@ -78,7 +83,7 @@ require (
 	github.com/src-d/gcfg v1.4.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
-	golang.org/x/mod v0.9.0 // indirect
+	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
 	golang.org/x/term v0.7.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
