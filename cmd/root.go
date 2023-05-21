@@ -151,11 +151,13 @@ func findSharedCredFile() {
 
 		cred, err := awsConfig.Credentials.Retrieve(context.Background())
 
-		if err != nil || cred.Expired() || cred.AccessKeyID == "" || cred.SecretAccessKey == "" {
-			color.Yellow("[Expire] outline-vpn default mfa credential file %s", sharedCredFile)
-			os.Unsetenv("AWS_SHARED_CREDENTIALS_FILE")
-		} else {
-			_credential.awsConfig = &awsConfig
+		if err != nil {
+			if cred.Expired() || cred.AccessKeyID == "" || cred.SecretAccessKey == "" {
+				color.Yellow("[Expire] outline-vpn default mfa credential file %s", sharedCredFile)
+				os.Unsetenv("AWS_SHARED_CREDENTIALS_FILE")
+			} else {
+				_credential.awsConfig = &awsConfig
+			}
 		}
 	}
 }
@@ -174,7 +176,7 @@ func findRegion(awsRegion string) {
 	}
 }
 
-func setTempConfig(awsRegion string, subcmd *cobra.Command) (string, aws.Config) {
+func setTempConfig(awsRegion string) (string, aws.Config) {
 	var temporaryCredentials aws.Credentials
 	var temporaryConfig aws.Config
 
@@ -185,7 +187,7 @@ func setTempConfig(awsRegion string, subcmd *cobra.Command) (string, aws.Config)
 			temporaryCredentials.SessionToken == ""
 	}
 
-	var temporaryCredentialsError = func(temporaryCredentials aws.Credentials, err error, subcmd *cobra.Command) bool {
+	var temporaryCredentialsError = func(temporaryCredentials aws.Credentials, err error) bool {
 		return temporaryCredentialsInvalid(temporaryCredentials)
 	}
 
@@ -199,9 +201,8 @@ func setTempConfig(awsRegion string, subcmd *cobra.Command) (string, aws.Config)
 		if err != nil {
 			panicRed(internal.WrapError(err))
 		}
-
 		temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
-		if temporaryCredentialsError(temporaryCredentials, err, subcmd) {
+		if temporaryCredentialsError(temporaryCredentials, err) {
 			panicRed(internal.WrapError(fmt.Errorf("invalid global environments %s", err.Error())))
 		}
 	} else {
@@ -213,7 +214,7 @@ func setTempConfig(awsRegion string, subcmd *cobra.Command) (string, aws.Config)
 			temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
 		}
 
-		if temporaryCredentialsError(temporaryCredentials, err, subcmd) {
+		if temporaryCredentialsError(temporaryCredentials, err) {
 			temporaryConfig, err = internal.NewSharedConfig(context.Background(),
 				_credential.awsProfile,
 				[]string{config.DefaultSharedConfigFilename()},
@@ -359,7 +360,7 @@ func initConfig() {
 
 	awsRegion := viper.GetString("region")
 	if _credential.awsConfig == nil {
-		temporaryCredentialsString, temporaryConfig := setTempConfig(awsRegion, subcmd)
+		temporaryCredentialsString, temporaryConfig := setTempConfig(awsRegion)
 		awsRegion = createTemporaryCredentialsFile(temporaryCredentialsString, awsRegion, temporaryConfig)
 	}
 	findRegion(awsRegion)
