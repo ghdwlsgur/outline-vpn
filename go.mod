@@ -18,7 +18,7 @@ require (
 	github.com/hashicorp/terraform-exec v0.18.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	github.com/zclconf/go-cty v1.13.1
 	gopkg.in/src-d/go-git.v4 v4.13.1
 )
