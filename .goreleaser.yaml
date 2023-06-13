@@ -1,3 +1,4 @@
+project_name: outline-vpn
 before:
   hooks:
     - go mod tidy
@@ -20,18 +21,19 @@ builds:
       - all=-trimpath={{.Env.GOPATH}}
     ldflags:
       - -s -w
-      - -X main.outline-vpnVersion=v1.0.11
+      - -X main.outline-vpnVersion={{.Version}}
     ignore:
       - goos: windows
         goarch: arm64
 archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      amd64: x86_64
-    format: tar.gz
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64      
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
     files:
       - LICENSE
       - README.md
@@ -47,10 +49,11 @@ release:
     name: outline-vpn
 brews:
   - name: outline-vpn
+    homepage: "https://github.com/ghdwlsgur/outline-vpn"
+    description: "outline-vpn helps you easily and quickly provision EC2 with terraform and consume vpn service on your mobile or computer via outline application."
     tap:
       owner: ghdwlsgur
       name: homebrew-outline-vpn
     commit_author:
       name: ghdwlsgur
       email: vjinhyeokv@gmail.com
-    description: "outline-vpn helps you easily and quickly provision EC2 with terraform and consume vpn service on your mobile or computer via outline application."
