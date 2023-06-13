@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	ssmCommand = &cobra.Command{
+	connectCommand = &cobra.Command{
 		Use:   "connect",
 		Short: "Connect to an instance using the AWS SSM plugin.",
 		Long:  "Connect to an instance using the AWS SSM plugin.",
@@ -87,5 +87,5 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(ssmCommand)
+	rootCmd.AddCommand(connectCommand)
 }
