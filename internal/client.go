@@ -57,9 +57,13 @@ func (l *AccessKeys) GetAccessUrlList() []string {
 }
 
 func readOutlineInfo(region string) (*OutlineInfo, error) {
+	// outlineJsonPath := func(path, region string) string {
+	// 	return path + region + "/outline.json"
+	// }("/opt/homebrew/lib/outline-vpn/govpn-terraform/terraform.tfstate.d/", region)
+
 	outlineJsonPath := func(path, region string) string {
 		return path + region + "/outline.json"
-	}("/opt/homebrew/lib/outline-vpn/govpn-terraform/terraform.tfstate.d/", region)
+	}("/opt/homebrew/lib/outline-vpn/outline-vpn/terraform.tfstate.d/", region)
 
 	b, err := os.ReadFile(outlineJsonPath)
 	if err != nil {

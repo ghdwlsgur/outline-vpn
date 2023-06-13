@@ -17,14 +17,12 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	git "gopkg.in/src-d/go-git.v4"
 
 	which "github.com/hairyhenderson/go-which"
 )
 
 const (
 	_defaultProfile = "default"
-	_defaultGitURL  = "https://github.com/ghdwlsgur/govpn-terraform"
 )
 
 var (
@@ -37,11 +35,11 @@ var (
 
 	_defaultTerraformPath = func(path, terraformPath string) string {
 		return path + terraformPath
-	}(path, "/govpn-terraform")
+	}(path, "/outline-vpn")
 
 	_defaultTerraformVars = func(path, tfvarsJsonPath string) string {
 		return path + tfvarsJsonPath
-	}(path, "/govpn-terraform/terraform.tfvars.json")
+	}(path, "/terraform.tfvars.json")
 
 	rootCmd = &cobra.Command{
 		Use:   "outline-vpn",
@@ -83,36 +81,12 @@ func panicRed(err error) {
 	os.Exit(1)
 }
 
-func gitInit() {
-	// git clone https://github.com/ghdwlsgur/govpn-terraform
+func workingDirInit() {
 	if _, err := os.Stat(_defaultTerraformPath); errors.Is(err, os.ErrNotExist) {
-		// govpn-terraform folder does not exist
-		_, err := git.PlainClone(_defaultTerraformPath, false, &git.CloneOptions{
-			URL:      _defaultGitURL,
-			Progress: os.Stdout,
-		})
+		err := os.MkdirAll(_defaultTerraformPath, 0755)
 		if err != nil {
-			panicRed(err)
+			panic(err)
 		}
-
-		fmt.Println(color.GreenString("🎉 Terrafom File Download Complete! 🎉"))
-	} else {
-		// govpn-terraform folder exists
-		repository, err := git.PlainOpen(_defaultTerraformPath)
-		if err != nil {
-			panicRed(err)
-		}
-
-		worktree, err := repository.Worktree()
-		if err != nil {
-			panicRed(err)
-		}
-		err = worktree.Pull(&git.PullOptions{RemoteName: "origin"})
-		// if err != nil {
-		// 	fmt.Println(color.GreenString("govpn-terraform \t(%s)", err.Error()))
-		// } else {
-		// 	fmt.Println(color.GreenString("govpn-terraform \t(%s)", "pull complete"))
-		// }
 	}
 }
 
@@ -276,9 +250,6 @@ func libPrerequisite(libList []string) {
 		if err = libraryCheck(lib); err != nil {
 			panicRed(fmt.Errorf("⚠️  %s is not installed\n[required] jq, rsync and terraform must be installed as prerequisites.", lib))
 		}
-		// else {
-		// 	PrintFunc(lib, "ready")
-		// }
 	}
 	fmt.Println()
 }
@@ -331,7 +302,7 @@ func setUpPlugin() {
 func initConfig() {
 
 	_credential = &Credential{}
-	gitInit()
+	workingDirInit()
 
 	findProfile()
 	findSharedCredFile()

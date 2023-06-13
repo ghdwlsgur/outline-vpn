@@ -24,6 +24,12 @@ type (
 	}
 )
 
+const (
+	rootModule    = "ghdwlsgur/outline-vpn/ghdwlsgur"
+	moduleVersion = "1.0.7"
+	moduleName    = "outline-vpn"
+)
+
 func TerraformReady(ctx context.Context, ver string) (string, error) {
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
@@ -116,14 +122,14 @@ func CreateTf(workSpacePath string, region, ami, instanceType, az string) error 
 
 func CreateMainDotTf(workSpacePath string, region, ami, instanceType, az string) error {
 	var fileName = fmt.Sprintf(workSpacePath + "/main.tf")
-	const sourceRoot = "../../module/instance"
 
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 
-	moduleBlock := rootBody.AppendNewBlock("module", []string{"instance"})
+	moduleBlock := rootBody.AppendNewBlock("module", []string{moduleName})
 	moduleBody := moduleBlock.Body()
-	moduleBody.SetAttributeValue("source", cty.StringVal(sourceRoot))
+	moduleBody.SetAttributeValue("source", cty.StringVal(rootModule))
+	moduleBody.SetAttributeValue("version", cty.StringVal(moduleVersion))
 	moduleBody.SetAttributeValue("aws_region", cty.StringVal(region))
 	moduleBody.SetAttributeValue("ec2_ami", cty.StringVal(ami))
 	moduleBody.SetAttributeValue("instance_type", cty.StringVal(instanceType))
@@ -181,7 +187,7 @@ func CreateOutputDotTf(workSpacePath string) error {
 	accessKeyBody := accessKeyBlock.Body()
 	accessKeyBody.SetAttributeTraversal("value", hcl.Traversal{
 		hcl.TraverseRoot{Name: "module"},
-		hcl.TraverseAttr{Name: "instance"},
+		hcl.TraverseAttr{Name: moduleName},
 		hcl.TraverseAttr{Name: "OutlineClientAccessKey"},
 	})
 
@@ -204,7 +210,7 @@ func CreateKeyDotTf(workSpacePath string) error {
 	govpnBlock := rootBody.AppendNewBlock("resource", []string{"aws_key_pair", "govpn_key"})
 	govpnBody := govpnBlock.Body()
 	govpnBody.SetAttributeTraversal("key_name", hcl.Traversal{
-		hcl.TraverseRoot{Name: "\"govpn_${module.instance.Region}\""},
+		hcl.TraverseRoot{Name: "\"govpn_${module.outline-vpn.Region}\""},
 	})
 	govpnBody.SetAttributeTraversal("public_key", hcl.Traversal{
 		hcl.TraverseRoot{Name: "tls_private_key"},
