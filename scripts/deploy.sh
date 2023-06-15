@@ -33,7 +33,7 @@ function release
   git tag -a "$tag" -m "Add $tag"
   git push origin "$tag"
 
-  goreleaser release --rm-dist
+  goreleaser release --clean
 }
 
 function release_test
