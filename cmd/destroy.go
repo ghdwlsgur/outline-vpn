@@ -9,6 +9,7 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	"github.com/ghdwlsgur/outline-vpn/internal"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 )
 
@@ -97,7 +98,7 @@ var (
 		Run: func(_ *cobra.Command, _ []string) {
 			var (
 				instance *internal.EC2
-				table    = make(map[string]*internal.EC2)
+				ec2Table = make(map[string]*internal.EC2)
 			)
 
 			ctx := context.Background()
@@ -109,15 +110,16 @@ var (
 
 			if len(fileList) > 0 {
 
+				t := table.NewWriter()
+				t.SetOutputMirror(os.Stdout)
+				t.AppendHeader(table.Row{"ID", "Public IP", "Launch Time", "Instance Type", "Region"})
+
 				for _, regionName := range fileList {
 					instance, err = internal.FindSpecificTagInstance(ctx, *_credential.awsConfig, regionName)
 					if err != nil {
 						panicRed(err)
 					}
-					t := table.NewWriter()
-					t.SetOutputMirror(os.Stdout)
 
-					t.AppendHeader(table.Row{"ID", "Public IP", "Launch Time", "Instance Type", "Region"})
 					t.AppendRow(table.Row{
 						instance.GetID(),
 						instance.GetPublicIP(),
@@ -126,16 +128,15 @@ var (
 						instance.GetRegion(),
 					})
 
-					t.render()
-
-					tableKey := fmt.Sprintf("[public-ip: %s, type: %s]",
-						instance.GetPublicIP(),
+					tableKey := fmt.Sprintf("%s [%s]",
+						instance.GetID(),
 						instance.GetInstanceType())
-					table[tableKey] = instance
+					ec2Table[tableKey] = instance
 				}
+				t.Render()
 
 				var option []string
-				for key := range table {
+				for key := range ec2Table {
 					option = append(option, key)
 				}
 
@@ -144,7 +145,7 @@ var (
 					panicRed(err)
 				}
 
-				instance = table[answer]
+				instance = ec2Table[answer]
 			} else {
 				notice("There are no instances with the tag 'govpn-ec2' available in all regions.\n")
 				os.Exit(1)
