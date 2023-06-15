@@ -37,7 +37,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.36.5
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
 )
 
 require (
