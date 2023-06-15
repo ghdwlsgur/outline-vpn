@@ -41,7 +41,7 @@ function release_test
   sudo rm -rf "$CURRENT"/dist "$CURRENT"/gopath  
   export GOPATH="$CURRENT"/gopath
 
-  goreleaser release --snapshot --rm-dist
+  goreleaser release --snapshot --clean
 }
 
 CMD=$1
