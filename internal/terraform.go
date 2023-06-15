@@ -26,7 +26,7 @@ type (
 
 const (
 	rootModule    = "ghdwlsgur/outline-vpn/ghdwlsgur"
-	moduleVersion = "1.0.9"
+	moduleVersion = "1.0.10"
 	moduleName    = "outline-vpn"
 )
 
