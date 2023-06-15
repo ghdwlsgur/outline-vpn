@@ -108,17 +108,29 @@ var (
 			}
 
 			if len(fileList) > 0 {
+
 				for _, regionName := range fileList {
 					instance, err = internal.FindSpecificTagInstance(ctx, *_credential.awsConfig, regionName)
 					if err != nil {
 						panicRed(err)
 					}
+					t := table.NewWriter()
+					t.SetOutputMirror(os.Stdout)
 
-					tableKey := fmt.Sprintf("[id: %s public-ip: %s type: %s] region: %s",
+					t.AppendHeader(table.Row{"ID", "Public IP", "Launch Time", "Instance Type", "Region"})
+					t.AppendRow(table.Row{
 						instance.GetID(),
 						instance.GetPublicIP(),
+						instance.GetLaunchTime(),
 						instance.GetInstanceType(),
-						instance.GetRegion())
+						instance.GetRegion(),
+					})
+
+					t.render()
+
+					tableKey := fmt.Sprintf("[public-ip: %s, type: %s]",
+						instance.GetPublicIP(),
+						instance.GetInstanceType())
 					table[tableKey] = instance
 				}
 
