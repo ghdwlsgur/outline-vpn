@@ -21,7 +21,7 @@ import (
 
 const (
 	defaultInstanceType = "t2.micro"
-	defaultIpv4Url      = "http://ipv4.icanhazip.com"
+	DefaultIPv4Url      = "http://ipv4.icanhazip.com"
 )
 
 var defaultInstanceTagName string
@@ -88,20 +88,37 @@ func (ec2 *EC2) GetPrivateDomain() string {
 	return ec2.PrivateDomain
 }
 
-func CheckOutlineConnect(instance *EC2) (bool, error) {
-
-	resp, err := http.Get(defaultIpv4Url)
+func GetPublicIP() (string, error) {
+	resp, err := http.Get(DefaultIPv4Url)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	buf, err := io.ReadAll(resp.Body)
-	currentIpv4 := strings.TrimSpace(string(buf))
+	currentIPv4 := strings.TrimSpace(string(buf))
+
+	return currentIPv4, nil
+}
+
+func CheckOutlineConnect(instance *EC2) (bool, error) {
+
+	currentIPv4, err := GetPublicIP()
 	if err != nil {
 		return false, err
 	}
-	return instance.PublicIP == currentIpv4, nil
+	// resp, err := http.Get(DefaultIPv4Url)
+	// if err != nil {
+	// 	return false, err
+	// }
+	// defer resp.Body.Close()
+
+	// buf, err := io.ReadAll(resp.Body)
+	// currentIpv4 := strings.TrimSpace(string(buf))
+	// if err != nil {
+	// 	return false, err
+	// }
+	return instance.PublicIP == currentIPv4, nil
 }
 
 func DeleteKeyPair() error {

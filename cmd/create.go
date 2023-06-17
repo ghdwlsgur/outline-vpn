@@ -3,8 +3,13 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -16,8 +21,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type IPRange struct {
+	IPNet   *net.IPNet
+	Country string
+	State   string
+	City    string
+}
+
 const (
 	terraformVersion = "1.4.5"
+	icloudCSV        = "https://mask-api.icloud.com/egress-ip-ranges.csv"
 )
 
 var (
@@ -27,6 +40,79 @@ var (
 	2. Click Activate for the region where you want to create the default VPC.
 			`)
 )
+
+func verifyPrivateRelay() (bool, error) {
+	currentIPv4, err := internal.GetPublicIP()
+	if err != nil {
+		return false, err
+	}
+
+	ipRanges, err := fetchIPRanges(icloudCSV)
+	if err != nil {
+		return false, err
+	}
+
+	ip := net.ParseIP(currentIPv4)
+	if ip == nil {
+		return false, fmt.Errorf("Invalid IP address")
+	}
+
+	found := false
+	for _, ipRange := range ipRanges {
+		if ipRange.IPNet.Contains(ip) {
+			found = true
+			return found, fmt.Errorf("You need to disable Private Relay.")
+		}
+	}
+
+	return found, nil
+}
+
+func fetchIPRanges(url string) ([]IPRange, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	ipRanges := make([]IPRange, 0)
+
+	reader := csv.NewReader(resp.Body)
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		ipNet, err := parseIPNet(record[0])
+		if err != nil {
+			log.Println("Failed to parse IP range:", err)
+			continue
+		}
+
+		ipRange := IPRange{
+			IPNet:   ipNet,
+			Country: record[1],
+			State:   record[2],
+			City:    record[3],
+		}
+		ipRanges = append(ipRanges, ipRange)
+	}
+
+	return ipRanges, nil
+}
+
+func parseIPNet(cidr string) (*net.IPNet, error) {
+	_, ipNet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		return nil, err
+	}
+
+	return ipNet, nil
+}
 
 func terraformReady(ctx context.Context, version string) (*root, error) {
 	r := &root{}
@@ -279,6 +365,26 @@ var (
 		Long:  "Create an instance that can be used as an outline VPN server and all its resources.",
 		Run: func(_ *cobra.Command, _ []string) {
 			ctx := context.Background()
+
+			s := spinner.New(spinner.CharSets[17], 100*time.Millisecond)
+			s.UpdateCharSet(spinner.CharSets[17])
+			s.Color("fgHiCyan")
+			s.Restart()
+			s.Prefix = color.HiCyanString("Checking the status of Private Relay usage ")
+
+			usePrivateRelay, err := verifyPrivateRelay()
+			if usePrivateRelay {
+				fmt.Println()
+				panicRed(err)
+			}
+
+			ctx, cancel := context.WithTimeout(ctx, time.Minute)
+			defer cancel()
+
+			s.Stop()
+			go func() {
+				cancel()
+			}()
 
 			if _, err := os.Stat(_defaultTerraformVars); err == nil {
 				answer, err := decodeTerraformVarsFile()
