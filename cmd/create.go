@@ -377,14 +377,7 @@ var (
 				fmt.Println()
 				panicRed(err)
 			}
-
-			ctx, cancel := context.WithTimeout(ctx, time.Minute)
-			defer cancel()
-
 			s.Stop()
-			go func() {
-				cancel()
-			}()
 
 			if _, err := os.Stat(_defaultTerraformVars); err == nil {
 				answer, err := decodeTerraformVarsFile()
