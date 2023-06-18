@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/ghdwlsgur/outline-vpn/internal"
@@ -9,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func createAccessURL() error {
+func getAccessURL() error {
 
 	ctx := context.Background()
 	list, err := internal.ValidateOutlineJson(ctx, terraformVersion, _defaultTerraformPath)
@@ -22,7 +23,7 @@ func createAccessURL() error {
 		return err
 	}
 
-	accessKey, err := internal.CreateAccessKey(answer)
+	accessKeys, err := internal.GetAccessKeys(answer)
 	if err != nil {
 		return err
 	}
@@ -30,8 +31,14 @@ func createAccessURL() error {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 
-	t.AppendHeader(table.Row{"ID", "AccessURL", "Password", "Region"})
-	t.AppendRow(table.Row{accessKey.ID, accessKey.AccessURL, accessKey.Password, answer})
+	if len(accessKeys.Keys) > 0 {
+		t.AppendHeader(table.Row{"ID", "AccessURL", "Password", "Region"})
+		for _, v := range accessKeys.Keys {
+			t.AppendRow(table.Row{v.ID, v.AccessURL, v.Password, answer})
+		}
+	} else {
+		fmt.Println("The access key does not exist")
+	}
 
 	t.Render()
 
@@ -39,10 +46,10 @@ func createAccessURL() error {
 }
 
 var (
-	createCommand = &cobra.Command{
-		Use:       "create",
-		Short:     "Creating the outline resources",
-		Long:      "Creating the outline resources",
+	getCommand = &cobra.Command{
+		Use:       "get",
+		Short:     "Retrieving the outline resources",
+		Long:      "Retrieving the outline resources",
 		ValidArgs: []string{"accesskey"},
 		Args:      cobra.MatchAll(internal.WrapArgsError(cobra.MinimumNArgs(1)), cobra.ExactArgs(1), cobra.OnlyValidArgs),
 		Run: func(_ *cobra.Command, args []string) {
@@ -52,14 +59,15 @@ var (
 
 			switch args[0] {
 			case "accesskey":
-				if createAccessURL(); err != nil {
+				if getAccessURL(); err != nil {
 					panicRed(err)
 				}
 			}
+
 		},
 	}
 )
 
 func init() {
-	rootCmd.AddCommand(createCommand)
+	rootCmd.AddCommand(getCommand)
 }
