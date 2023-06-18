@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -13,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2_types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/fatih/color"
-	"github.com/go-resty/resty/v2"
 )
 
 type (
@@ -57,10 +55,6 @@ func (l *AccessKeys) GetAccessUrlList() []string {
 }
 
 func readOutlineInfo(region string) (*OutlineInfo, error) {
-	// outlineJsonPath := func(path, region string) string {
-	// 	return path + region + "/outline.json"
-	// }("/opt/homebrew/lib/outline-vpn/govpn-terraform/terraform.tfstate.d/", region)
-
 	outlineJsonPath := func(path, region string) string {
 		return path + region + "/outline.json"
 	}("/opt/homebrew/lib/outline-vpn/outline-vpn/terraform.tfstate.d/", region)
@@ -94,153 +88,6 @@ func GetApiURL(region string) (string, error) {
 		return "", err
 	}
 	return outlineInfo.ApiURL, nil
-}
-
-func CreateAccessKey(region string) error {
-	apiURL, err := GetApiURL(region)
-	if err != nil {
-		return err
-	}
-	url := fmt.Sprintf("%s/%s", apiURL, "access-keys")
-
-	client := resty.New()
-	client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
-	resp, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		Post(url)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode() == 200 {
-		return nil
-	}
-	return err
-}
-
-func GetAccessKeys(region string) ([]string, error) {
-	apiURL, err := GetApiURL(region)
-	if err != nil {
-		return nil, err
-	}
-	url := fmt.Sprintf("%s/%s", apiURL, "access-keys")
-
-	client := resty.New()
-	client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
-	resp, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	var accessKeys AccessKeys
-	if resp.StatusCode() == 200 {
-		err = json.Unmarshal(resp.Body(), &accessKeys)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return accessKeys.GetAccessUrlList(), nil
-}
-
-func DeleteAccessKey(region string, id int) error {
-	apiURL, err := GetApiURL(region)
-	if err != nil {
-		return err
-	}
-	url := fmt.Sprintf("%s/%s/%d", apiURL, "access-keys", id)
-
-	client := resty.New()
-	client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
-
-	resp, err := client.R().Delete(url)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode() == 204 {
-		return nil
-	}
-	return err
-}
-
-func RenameAccessKey(region string, id int, name string) error {
-	apiURL, err := GetApiURL(region)
-	if err != nil {
-		return err
-	}
-	url := fmt.Sprintf("%s/%s/%d/%s", apiURL, "access-keys", id, "name")
-
-	client := resty.New()
-	client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
-
-	putData := map[string]string{
-		"name": name,
-	}
-	resp, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody(putData).
-		Put(url)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode() == 204 {
-		return nil
-	}
-	return err
-}
-
-func AddDataLimitAccessKey(region string, id int, limit int) error {
-	apiURL, err := GetApiURL(region)
-	if err != nil {
-		return err
-	}
-	url := fmt.Sprintf("%s/%s/%d/%s", apiURL, "access-keys", id, "data-limit")
-
-	client := resty.New()
-	client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
-
-	putData := map[string]map[string]int{
-		"limit": {
-			"bytes": limit,
-		},
-	}
-	resp, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody(putData).
-		Put(url)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode() == 204 {
-		return nil
-	}
-	return err
-}
-
-func DeleteDataLimitAccessKey(region string, id int) error {
-	apiURL, err := GetApiURL(region)
-	if err != nil {
-		return err
-	}
-	url := fmt.Sprintf("%s/%s/%d/%s", apiURL, "access-keys", id, "data-limit")
-
-	client := resty.New()
-	client.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
-
-	resp, err := client.R().Delete(url)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode() == 204 {
-		return nil
-	}
-	return err
 }
 
 func AskRegion(ctx context.Context, cfg aws.Config) (*Region, error) {

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ghdwlsgur/outline-vpn/wraperror"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -31,4 +32,18 @@ func WrapError(err error) error {
 		return chainErr.Wrap(fmt.Errorf("[err][%s:%d]", fn, line))
 	}
 	return nil
+}
+
+func WrapArgsError(argFn cobra.PositionalArgs) cobra.PositionalArgs {
+	return func(cmd *cobra.Command, args []string) error {
+		err := argFn(cmd, args)
+		if err == nil {
+			return nil
+		}
+
+		return fmt.Errorf("Usage:  %s %s",
+			cmd.CommandPath(),
+			cmd.ValidArgs,
+		)
+	}
 }

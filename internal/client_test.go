@@ -17,7 +17,7 @@ func TestGetAccessKeys(t *testing.T) {
 }
 
 func TestDeleteAccessKey(t *testing.T) {
-	DeleteAccessKey("ap-northeast-1", 4)
+	DeleteAccessKey("ap-northeast-1", "4")
 }
 
 func TestRenameAccessKey(t *testing.T) {
