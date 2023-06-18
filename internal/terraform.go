@@ -53,6 +53,21 @@ func SetRoot(execPath, terraformPath string) (*tfexec.Terraform, error) {
 	return tf, nil
 }
 
+func GetWorkspaceList(ctx context.Context, execPath, _defaultTerraformPath string) ([]string, error) {
+	tf, err := SetRoot(execPath, _defaultTerraformPath)
+	if err != nil {
+		return nil, err
+	}
+
+	list, _, err := tf.WorkspaceList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// exclude default workspace
+	return list[1:], nil
+}
+
 func ExistsWorkspace(ctx context.Context, execPath, _defaultTerraformPath, regionName string) (*Workspace, error) {
 	tf, err := SetRoot(execPath, _defaultTerraformPath)
 	if err != nil {
