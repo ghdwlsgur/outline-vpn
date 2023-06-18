@@ -122,18 +122,18 @@ brew upgrade outline-vpn
 
 # How to use (command)
 
-### create
+### apply
 
 > Create a VPN server
 
 ```bash
-$ outline-vpn create
+$ outline-vpn apply
 
 # Provision EC2 in the us-east-1 region.
-$ outline-vpn create -r us-east-1
+$ outline-vpn apply -r us-east-1
 
 # Provision EC2 in the ap-northeast-2 region.
-$ outline-vpn create -r ap-northeast-2
+$ outline-vpn apply -r ap-northeast-2
 ```
 
 [![asciicast](https://asciinema.org/a/oxEkepkL4Xcx1hkENCNblSHML.svg)](https://asciinema.org/a/oxEkepkL4Xcx1hkENCNblSHML)
