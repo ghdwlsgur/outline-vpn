@@ -59,6 +59,43 @@ func deleteTagVPC(ctx context.Context) error {
 	return nil
 }
 
+// func returnWorkspaceFileList() ([]string, error) {
+// 	var fileList []string
+
+// 	rootDir := _defaultTerraformPath + "/terraform.tfstate.d/"
+// 	f, err := os.ReadDir(rootDir)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	if len(f) > 0 {
+// 		for _, file := range f {
+// 			region := file.Name()
+// 			subDir := rootDir + region
+
+// 			if region == ".DS_Store" {
+// 				os.Remove(subDir)
+// 				return nil, fmt.Errorf("Delete .DS_Store File")
+// 			}
+
+// 			f, err := os.ReadDir(subDir)
+// 			if err != nil {
+// 				return nil, err
+// 			}
+
+// 			if len(f) > 0 {
+// 				for _, file := range f {
+// 					if file.Name() == "outline.json" {
+// 						fileList = append(fileList, region)
+// 					}
+// 				}
+// 			}
+// 		}
+// 	}
+
+// 	return fileList, nil
+// }
+
 func returnWorkspaceFileList() ([]string, error) {
 	var fileList []string
 
@@ -72,6 +109,14 @@ func returnWorkspaceFileList() ([]string, error) {
 		for _, file := range f {
 			region := file.Name()
 			subDir := rootDir + region
+
+			if region == ".DS_Store" {
+				os.Remove(subDir)
+				fmt.Printf("Deleted %s file\n", subDir)
+				continue // 다음 파일 또는 폴더로 넘어감
+			}
+
+			// .DS_Store가 아닌 경우에만 계속 진행
 			f, err := os.ReadDir(subDir)
 			if err != nil {
 				return nil, err
