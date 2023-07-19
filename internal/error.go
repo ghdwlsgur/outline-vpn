@@ -41,7 +41,7 @@ func WrapArgsError(argFn cobra.PositionalArgs) cobra.PositionalArgs {
 			return nil
 		}
 
-		return fmt.Errorf("Usage:  %s %s",
+		return fmt.Errorf("usage:  %s %s",
 			cmd.CommandPath(),
 			cmd.ValidArgs,
 		)
