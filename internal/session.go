@@ -43,7 +43,7 @@ func CallProcess(process string, args ...string) error {
 			select {
 			case <-sigs:
 			case <-done:
-				break
+				return
 			}
 		}
 	}()
