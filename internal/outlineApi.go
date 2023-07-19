@@ -14,9 +14,7 @@ func checkOutlineJsonExists(list []string) []string {
 	workspace := make([]string, 0)
 
 	for _, region := range list {
-		outlineJsonPath := func(path, workspace string) string {
-			return path + workspace + "/outline.json"
-		}("/opt/homebrew/lib/outline-vpn/outline-vpn/terraform.tfstate.d/", region)
+		outlineJsonPath := ReturnTerraformPath(region) + "/outline.json"
 
 		_, err := os.Stat(outlineJsonPath)
 		if !os.IsNotExist(err) {
@@ -98,9 +96,6 @@ func GetAccessKeys(region string) (*AccessKeys, error) {
 			return nil, err
 		}
 	}
-
-	// fmt.Println(accessKeys.Keys[0].ID)
-	// return accessKeys.GetAccessUrlList(), nil
 
 	return &accessKeys, nil
 }

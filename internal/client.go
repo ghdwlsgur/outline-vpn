@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2_types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/fatih/color"
+	"github.com/hairyhenderson/go-which"
 )
 
 type (
@@ -54,10 +56,14 @@ func (l *AccessKeys) GetAccessUrlList() []string {
 	return result
 }
 
+func ReturnTerraformPath(region string) string {
+	path := which.Which("outline-vpn")
+	path = strings.Replace(path, "bin", "lib", -1)
+	return path + "/outline-vpn/terraform.tfstate.d/" + region
+}
+
 func readOutlineInfo(region string) (*OutlineInfo, error) {
-	outlineJsonPath := func(path, region string) string {
-		return path + region + "/outline.json"
-	}("/opt/homebrew/lib/outline-vpn/outline-vpn/terraform.tfstate.d/", region)
+	outlineJsonPath := ReturnTerraformPath(region) + "/outline.json"
 
 	b, err := os.ReadFile(outlineJsonPath)
 	if err != nil {
