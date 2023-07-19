@@ -96,6 +96,9 @@ func GetPublicIP() (string, error) {
 	defer resp.Body.Close()
 
 	buf, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
 	currentIPv4 := strings.TrimSpace(string(buf))
 
 	return currentIPv4, nil
