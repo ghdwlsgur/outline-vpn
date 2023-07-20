@@ -33,13 +33,13 @@ const (
 	icloudCSV        = "https://mask-api.icloud.com/egress-ip-ranges.csv"
 )
 
-var (
-	stsRegionError = fmt.Errorf(`
-	⚠️  [privacy] Direct permission modification is required.
-	1. Aws Console -> IAM -> Account Settings
-	2. Click Activate for the region where you want to create the default VPC.
-			`)
-)
+// var (
+// 	errStsRegion = fmt.Errorf(`
+// 	⚠️  [privacy] Direct permission modification is required.
+// 	1. Aws Console -> IAM -> Account Settings
+// 	2. Click Activate for the region where you want to create the default VPC.
+// 			`)
+// )
 
 func verifyPrivateRelay() (bool, error) {
 	currentIPv4, err := internal.GetPublicIP()
@@ -54,14 +54,14 @@ func verifyPrivateRelay() (bool, error) {
 
 	ip := net.ParseIP(currentIPv4)
 	if ip == nil {
-		return false, fmt.Errorf("Invalid IP address")
+		return false, fmt.Errorf("invalid IP address")
 	}
 
 	found := false
 	for _, ipRange := range ipRanges {
 		if ipRange.IPNet.Contains(ip) {
 			found = true
-			return found, fmt.Errorf("You need to disable Private Relay.")
+			return found, fmt.Errorf("you need to disable Private Relay")
 		}
 	}
 
@@ -169,19 +169,13 @@ func findInstance(ctx context.Context, r *root) error {
 type root struct {
 	execPath  string
 	workspace *tfexec.Terraform
-
-	regionSpace struct {
-		execPath  string
-		workspace *tfexec.Terraform
-	}
 }
 
 var (
-	ami           *internal.Ami
-	az            *internal.AvailabilityZone
-	instanceType  *internal.InstanceType
-	defaultVpc    *internal.DefaultVpc
-	defaultSubnet *internal.DefaultSubnet
+	ami          *internal.Ami
+	az           *internal.AvailabilityZone
+	instanceType *internal.InstanceType
+	defaultVpc   *internal.DefaultVpc
 
 	instance *internal.EC2
 	err      error
