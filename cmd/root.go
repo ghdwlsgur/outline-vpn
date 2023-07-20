@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -157,8 +156,7 @@ func setTempConfig(awsRegion string) (string, aws.Config) {
 	var temporaryCredentialsInvalid = func(temporaryCredentials aws.Credentials) bool {
 		return temporaryCredentials.Expired() ||
 			temporaryCredentials.AccessKeyID == "" ||
-			temporaryCredentials.SecretAccessKey == "" ||
-			temporaryCredentials.SessionToken == ""
+			temporaryCredentials.SecretAccessKey == ""
 	}
 
 	var temporaryCredentialsError = func(temporaryCredentials aws.Credentials, err error) bool {
@@ -201,6 +199,7 @@ func setTempConfig(awsRegion string) (string, aws.Config) {
 			if err != nil {
 				panicRed(internal.WrapError(err))
 			}
+
 			if temporaryCredentialsInvalid(temporaryCredentials) {
 				panicRed(internal.WrapError(fmt.Errorf("not found credentials")))
 			}
@@ -248,7 +247,7 @@ func libraryCheck(lib string) error {
 func libPrerequisite(libList []string) {
 	for _, lib := range libList {
 		if err = libraryCheck(lib); err != nil {
-			panicRed(fmt.Errorf("⚠️  %s is not installed\n[required] jq, rsync and terraform must be installed as prerequisites.", lib))
+			panicRed(fmt.Errorf("⚠️  %s is not installed\n[required] jq, rsync and terraform must be installed as prerequisites", lib))
 		}
 	}
 	fmt.Println()
@@ -284,7 +283,7 @@ func setUpPlugin() {
 		internal.GetSSMPluginName())
 	if info, err := os.Stat(_credential.ssmPluginPath); os.IsNotExist(err) {
 		color.Green("[create] aws ssm plugin")
-		if err := ioutil.WriteFile(_credential.ssmPluginPath, plugin, 0755); err != nil {
+		if err := os.WriteFile(_credential.ssmPluginPath, plugin, 0755); err != nil {
 			panicRed(internal.WrapError(err))
 		}
 	} else if err != nil {
@@ -292,7 +291,7 @@ func setUpPlugin() {
 	} else {
 		if int(info.Size()) != len(plugin) {
 			color.Green("[update] aws ssm plugin")
-			if err := ioutil.WriteFile(_credential.ssmPluginPath, plugin, 0755); err != nil {
+			if err := os.WriteFile(_credential.ssmPluginPath, plugin, 0755); err != nil {
 				panicRed(internal.WrapError(err))
 			}
 		}

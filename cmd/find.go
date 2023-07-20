@@ -42,7 +42,7 @@ var (
 
 			var result string
 			if len(regionList) == 0 {
-				fmt.Printf(color.HiRedString("No instances created with outline-vpn cli were found.\n"))
+				fmt.Print(color.HiRedString("No instances created with outline-vpn cli were found.\n"))
 			} else {
 				for _, region := range regionList {
 					f := fmt.Sprintf(" %s", region)
