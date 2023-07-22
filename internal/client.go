@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -113,22 +114,59 @@ func AskRegion(ctx context.Context, cfg aws.Config) (*Region, error) {
 			},
 		})
 
+	countryMapInKorean := map[string]string{
+		"us-east-1":      "미국 동부 (버지니아 북부)",
+		"us-east-2":      "미국 동부 (오하이오)",
+		"us-west-1":      "미국 서부 (캘리포니아)",
+		"us-west-2":      "미국 서부 (오레곤)",
+		"ap-east-1":      "아시아 태평양 (홍콩)",
+		"ap-south-2":     "아시아 태평양 (인도 - 하이데라바드)",
+		"ap-south-1":     "아시아 태펴양 (인도 - 뭄바이)",
+		"ap-northeast-3": "아시아 태평양 (일본 - 오사카)",
+		"ap-northeast-1": "아시아 태평양 (일본 - 도쿄)",
+		"ap-northeast-2": "아시아 태평양 (서울)",
+		"ap-southeast-1": "아시아 태평양 (싱가포르)",
+		"ap-southeast-2": "아시아 태평양 (호주 - 시드니)",
+		"ap-southeast-4": "아시아 태평양 (호주 - 멜버른)",
+		"ap-southeast-3": "아시아 태평양 (인도네시아 - 자카르타)",
+		"ca-central-1":   "캐나다 (중부)",
+		"eu-central-1":   "유럽 (독일 - 프랑크푸르트)",
+		"eu-west-1":      "유럽 (아일랜드)",
+		"eu-west-2":      "유럽 (영국 - 런던)",
+		"eu-west-3":      "유럽 (프랑스 - 파리)",
+		"eu-north-1":     "유럽 (스웨덴 - 스톡홀름)",
+		"me-central-1":   "중동 (아랍에미리트)",
+		"sa-east-1":      "남아메리카 (브라질 - 상파울루)",
+		"af-south-1":     "아프리카 (남아프리카공화국 - 케이프타운)",
+		"eu-south-1":     "유럽 (이탈리아 - 밀라노)",
+		"eu-south-2":     "유럽 (스페인)",
+		"eu-central-2":   "유럽 (스위스 - 취리히)",
+		"me-south-1":     "중동 (바레인)",
+	}
+
 	if err != nil {
 		return nil, err
 	} else {
 		regions = make([]string, 0, len(output.Regions))
 		for _, region := range output.Regions {
-			regions = append(regions, aws.ToString(region.RegionName))
+			if len(*region.RegionName) <= 12 {
+				regions = append(regions, aws.ToString(region.RegionName)+"\t\t"+countryMapInKorean[*region.RegionName])
+			} else {
+				regions = append(regions, aws.ToString(region.RegionName)+"\t"+countryMapInKorean[*region.RegionName])
+			}
 		}
 	}
 	sort.Strings(regions)
 
-	answer, err := AskPromptOptionList("Choose a region in AWS:", regions, len(regions))
+	answerWithKorean, err := AskPromptOptionList("Choose a region in AWS:", regions, len(regions))
 	if err != nil {
 		return nil, err
 	}
 
-	return &Region{Name: answer}, nil
+	re := regexp.MustCompile(`^[^\t]+`)
+	region := re.FindString(answerWithKorean)
+
+	return &Region{Name: region}, nil
 }
 
 func CreateTags(ctx context.Context, cfg aws.Config, id *string, tagName string) error {
