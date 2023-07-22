@@ -33,14 +33,6 @@ const (
 	icloudCSV        = "https://mask-api.icloud.com/egress-ip-ranges.csv"
 )
 
-// var (
-// 	errStsRegion = fmt.Errorf(`
-// 	⚠️  [privacy] Direct permission modification is required.
-// 	1. Aws Console -> IAM -> Account Settings
-// 	2. Click Activate for the region where you want to create the default VPC.
-// 			`)
-// )
-
 func verifyPrivateRelay() (bool, error) {
 	currentIPv4, err := internal.GetPublicIP()
 	if err != nil {
@@ -377,8 +369,8 @@ var (
 				if err != nil {
 					panicRed(err)
 				}
-
 				if answer == "No" {
+					fmt.Println(color.HiGreenString("The following region list represents the Active regions in my current AWS account."))
 					askRegion, err := internal.AskRegion(ctx, *_credential.awsConfig)
 					if err != nil {
 						panicRed(err)
@@ -396,6 +388,13 @@ var (
 					}
 				}
 			} else {
+				fmt.Println(color.HiGreenString("The following region list represents the Active regions in my current AWS account."))
+				askRegion, err := internal.AskRegion(ctx, *_credential.awsConfig)
+				if err != nil {
+					panicRed(err)
+				}
+				_credential.awsConfig.Region = askRegion.Name
+
 				err = inputTerraformVariable(ctx)
 				if err != nil {
 					panicRed(err)
