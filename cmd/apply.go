@@ -29,7 +29,7 @@ type IPRange struct {
 }
 
 const (
-	terraformVersion = "1.4.5"
+	terraformVersion = "1.7.3"
 	icloudCSV        = "https://mask-api.icloud.com/egress-ip-ranges.csv"
 )
 
@@ -463,7 +463,7 @@ var (
 
 			// terraform init [workspace] =============================================
 			if err = workSpaceTf.Init(ctx, tfexec.Upgrade(true)); err != nil {
-				panicRed(fmt.Errorf("failed to terraform init"))
+				panicRed(fmt.Errorf("failed to terraform init %s", err))
 			}
 			internal.PrintProvisioning("[workspace]", "terraform-init:", "success")
 
