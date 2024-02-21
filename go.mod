@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.148.0
-	github.com/aws/aws-sdk-go-v2/service/ssm v1.47.0
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.47.1
 	github.com/aws/aws-sdk-go-v2/service/sts v1.27.0
 	github.com/briandowns/spinner v1.23.0
 	github.com/fatih/color v1.16.0
