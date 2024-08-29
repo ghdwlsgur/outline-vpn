@@ -47,9 +47,11 @@ func deleteAccessURL() error {
 			return err
 		}
 
-		if internal.DeleteAccessKey(region, tableOption[answer].ID); err == nil {
+		err = internal.DeleteAccessKey(region, tableOption[answer].ID)
+		if err == nil {
 			congratulation("Delete Success!\n")
 		}
+
 	} else {
 		fmt.Println("The access key does not exist")
 	}
