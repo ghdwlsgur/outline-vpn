@@ -388,7 +388,7 @@ func AskAmi(ctx context.Context, cfg aws.Config) (*Ami, error) {
 		outputFunc = func(table map[string]*Ami, output *ec2.DescribeImagesOutput) {
 			for _, ami := range output.Images {
 
-				if strings.Contains(*ami.ImageLocation, "amzn-ami-hvm") {
+				if strings.Contains(*ami.ImageLocation, "amzn2-ami-hvm") {
 					table[fmt.Sprintf("%s\t(%s)", *ami.ImageId, *ami.ImageLocation)] = &Ami{
 						Name:          aws.ToString(ami.ImageId),
 						ImageLocation: aws.ToString(ami.ImageLocation),
