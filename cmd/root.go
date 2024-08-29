@@ -159,7 +159,7 @@ func setTempConfig(awsRegion string) (string, aws.Config) {
 			temporaryCredentials.SecretAccessKey == ""
 	}
 
-	var temporaryCredentialsError = func(temporaryCredentials aws.Credentials, err error) bool {
+	var temporaryCredentialsError = func(temporaryCredentials aws.Credentials) bool {
 		return temporaryCredentialsInvalid(temporaryCredentials)
 	}
 
@@ -174,7 +174,7 @@ func setTempConfig(awsRegion string) (string, aws.Config) {
 			panicRed(internal.WrapError(err))
 		}
 		temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
-		if temporaryCredentialsError(temporaryCredentials, err) {
+		if temporaryCredentialsError(temporaryCredentials) {
 			panicRed(internal.WrapError(fmt.Errorf("invalid global environments %s", err.Error())))
 		}
 	} else {
@@ -186,7 +186,7 @@ func setTempConfig(awsRegion string) (string, aws.Config) {
 			temporaryCredentials, err = temporaryConfig.Credentials.Retrieve(context.Background())
 		}
 
-		if temporaryCredentialsError(temporaryCredentials, err) {
+		if temporaryCredentialsError(temporaryCredentials) {
 			temporaryConfig, err = internal.NewSharedConfig(context.Background(),
 				_credential.awsProfile,
 				[]string{config.DefaultSharedConfigFilename()},
